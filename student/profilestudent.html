@@ -87,11 +87,24 @@
                 event.preventDefault();
 
                 const userId = auth.currentUser.uid;
-                const updatedData = {
-                    secondary_email: document.getElementById('secondaryEmailInput').value,
-                    phone_number: document.getElementById('phoneNumberInput').value,
-                    address: document.getElementById('addressInput').value
-                };
+                let updatedData = {};
+
+                const secondaryEmail = document.getElementById('secondaryEmailInput').value;
+                const phoneNumber = document.getElementById('phoneNumberInput').value;
+                const address = document.getElementById('addressInput').value;
+
+                // Only add non-empty values to the updatedData object
+                if (secondaryEmail.trim() !== "") {
+                    updatedData.secondary_email = secondaryEmail;
+                }
+
+                if (phoneNumber.trim() !== "") {
+                    updatedData.phone_number = phoneNumber;
+                }
+
+                if (address.trim() !== "") {
+                    updatedData.address = address;
+                }
 
                 const profilePictureFile = document.getElementById('profilePictureInput').files[0];
                 if (profilePictureFile) {
