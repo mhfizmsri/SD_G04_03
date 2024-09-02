@@ -13,9 +13,9 @@
     <script type="module">
         // Import Firebase App, Authentication, and Firestore SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
+    
         // Your Firebase project configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAFLeG3xlGCH9Ci7j8q6GBA1jDVyb3zSM4",
@@ -25,23 +25,26 @@
             messagingSenderId: "150286309478",
             appId: "1:150286309478:web:4ec07841589ecfc34975a7"
         };
-
+    
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-
+    
         // Function to handle login and check admin role
         async function loginAndCheckRole(email, password) {
             try {
+                // Set session persistence to browser session persistence
+                await setPersistence(auth, browserSessionPersistence);
+    
                 // Sign in the user with Firebase Authentication
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
-
+    
                 // Get the user's document from Firestore
                 const userDocRef = doc(db, "users", user.uid);
                 const userDoc = await getDoc(userDocRef);
-
+    
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
                     // Check if the user has the admin role
@@ -56,25 +59,27 @@
                     alert("No user data found.");
                 }
             } catch (error) {
-                console.error("Error: ", error.code, error.message);
+                console.error("Error during login:", error.code, error.message);
                 alert("Error: " + error.message);
             }
         }
-
+    
         // Attach event listener to the login form
         document.addEventListener("DOMContentLoaded", () => {
-            document.querySelector("form").addEventListener("submit", function(e) {
+            const loginForm = document.querySelector("form");
+            loginForm.addEventListener("submit", function(e) {
                 e.preventDefault();  // Prevent the form from submitting normally
-
+    
                 // Get email and password from the form inputs
                 const email = document.getElementById("inputEmail").value;
                 const password = document.getElementById("inputPassword").value;
-
-                // Call the login function
+    
+                // Call the login function and check for role
                 loginAndCheckRole(email, password);
             });
         });
     </script>
+    
 </head>
 <body class="bg-primary">
     <div id="layoutAuthentication">

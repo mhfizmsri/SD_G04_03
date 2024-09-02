@@ -10,6 +10,52 @@
         <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
         <link href="css/styles.css" rel="stylesheet" />
         <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+
+        <script type="module">
+            // Import Firebase App and Authentication SDK
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+            import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        
+            // Your Firebase project configuration
+            const firebaseConfig = {
+                apiKey: "AIzaSyAFLeG3xlGCH9Ci7j8q6GBA1jDVyb3zSM4",
+                authDomain: "utmsmartscan.firebaseapp.com",
+                projectId: "utmsmartscan",
+                storageBucket: "utmsmartscan.appspot.com",
+                messagingSenderId: "150286309478",
+                appId: "1:150286309478:web:4ec07841589ecfc34975a7"
+            };
+        
+            // Initialize Firebase
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+        
+            // Ensure that user is logged in, otherwise redirect to login page
+            document.addEventListener("DOMContentLoaded", () => {
+                onAuthStateChanged(auth, (user) => {
+                    if (!user) {
+                        // No user is logged in, redirect to login page
+                        window.location.href = 'login.html';
+                    }
+                });
+        
+                // Move the logout event listener inside the DOMContentLoaded event
+                const logoutButton = document.getElementById('logout');
+                if (logoutButton) {  // Check if the element exists
+                    logoutButton.addEventListener('click', function() {
+                        signOut(auth).then(() => {
+                            // Sign-out successful
+                            window.location.href = 'login.html';  // Redirect to login.html
+                        }).catch((error) => {
+                            // Handle errors here
+                            console.error('Sign Out Error', error);
+                        });
+                    });
+                } else {
+                    console.error('Logout button not found');
+                }
+            });
+        </script>
     </head>
     <body class="sb-nav-fixed">
         <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
@@ -32,7 +78,7 @@
                         <li><a class="dropdown-item" href="add.html">Settings</a></li>
                         <li><a class="dropdown-item" href="#!">Activity Log</a></li>
                         <li><hr class="dropdown-divider" /></li>
-                        <li><a class="dropdown-item" a href="login.html" >Logout</a></li>
+                        <li><a class="dropdown-item" a href="login.html" id="logout">Logout</a></li>
                     </ul>
                 </li>
             </ul>
