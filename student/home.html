@@ -29,30 +29,6 @@
             // Initialize Firebase
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
-            const db = getFirestore(app);
-            const storage = getStorage(app);
-
-            async function fetchUserData(user) {
-            const userId = user.uid;
-
-            // Fetch data from the main user document
-            const userDocRef = doc(db, "users", userId);
-            const userDoc = await getDoc(userDocRef);
-
-            if (userDoc.exists()) {
-                const userData = userDoc.data();
-                document.getElementById('studentnName').innerText = userData.Name || "User";
-                document.getElementById('mainEmail').innerText = user.email;
-                document.getElementById('secondaryEmail').innerText = userData.secondary_email || "Not provided";
-                document.getElementById('phoneNumber').innerText = userData.phone_number || "Not provided";
-                document.getElementById('address').innerText = userData.Address || "Not provided";
-                document.getElementById('profilePicture').src = userData.Profile_Picture || "default_profile_picture.jpg";
-            } else {
-                console.log("No such user document!");
-            }
-
-
-        }
         
             // Ensure that user is logged in, otherwise redirect to login page
             document.addEventListener("DOMContentLoaded", () => {
@@ -89,10 +65,7 @@
             <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" href="#!"><i class="fas fa-bars"></i></button>
             <!-- Navbar Search-->
             <form class="d-none d-md-inline-block form-inline ms-auto me-0 me-md-3 my-2 my-md-0">
-                <div class="input-group">
-                    <input class="form-control" type="text" placeholder="Search for..." aria-label="Search for..." aria-describedby="btnNavbarSearch" />
-                    <button class="btn btn-primary" id="btnNavbarSearch" type="button"><i class="fas fa-search"></i></button>
-                </div>
+               
             </form>
             <!-- Navbar-->
             <ul class="navbar-nav ms-auto ms-md-0 me-3 me-lg-4">
@@ -126,7 +99,7 @@
                             <div class="collapse" id="collapseLayouts" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
                                 <nav class="sb-sidenav-menu-nested nav">
                                     <a class="nav-link" href="layout-static.html">Static Navigation</a>
-                                    <a class="nav-link" href="layout-sidenav-light.html">Send Feedback</a>
+                                    <a class="nav-link" href="sendfeedback.html">Send Feedback</a>
                                 </nav>
                             </div>
                             <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePages" aria-expanded="false" aria-controls="collapsePages">
