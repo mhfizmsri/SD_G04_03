@@ -13,7 +13,7 @@
     <script type="module">
         // Import Firebase App and Authentication SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signOut} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
@@ -83,6 +83,22 @@
 
         // Update user profile function
         document.addEventListener("DOMContentLoaded", () => {
+            // Move the logout event listener inside the DOMContentLoaded event
+            const logoutButton = document.getElementById('logout');
+                if (logoutButton) {  // Check if the element exists
+                    logoutButton.addEventListener('click', function() {
+                        signOut(auth).then(() => {
+                            // Sign-out successful
+                            window.location.href = 'index.html';  // Redirect to login.html
+                        }).catch((error) => {
+                            // Handle errors here
+                            console.error('Sign Out Error', error);
+                        });
+                    });
+                } else {
+                    console.error('Logout button not found');
+                }
+
             document.getElementById('updateProfileForm').addEventListener('submit', async function(event) {
                 event.preventDefault();
 
@@ -271,7 +287,7 @@
                     <li><a class="dropdown-item" href="#!">Settings</a></li>
                     <li><a class="dropdown-item" href="profilestudent.html">View profile</a></li>
                     <li><hr class="dropdown-divider" /></li>
-                    <li><a class="dropdown-item" href="index.html">Logout</a></li>
+                    <li><a class="dropdown-item" a href="index.html" id="logout">Logout</a></li>
                 </ul>
             </li>
         </ul>
