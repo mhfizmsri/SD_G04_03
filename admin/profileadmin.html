@@ -44,8 +44,8 @@
             if (userDoc.exists()) {
                 const userData = userDoc.data();
                 console.log("User Data:", userData);  // Debugging: Check what data is being fetched
-                document.getElementById('studentName').innerText = userData.Name || "User";
-                document.getElementById('studentNameHeading').innerText = userData.Name || "User";
+                document.getElementById('adminName').innerText = userData.Name || "User";
+                document.getElementById('adminNameHeading').innerText = userData.Name || "User";
                 document.getElementById('mainEmail').innerText = user.email;
                 document.getElementById('secondaryEmail').innerText = userData.secondary_email || "Not provided";
                 document.getElementById('phoneNumber').innerText = userData.phone_number || "Not provided";
@@ -316,9 +316,9 @@
                             </nav>
                         </div>
                         <div class="sb-sidenav-menu-heading">Addons</div>
-                        <a class="nav-link" href="charts.html">
+                        <a class="nav-link" href="checkfeedback.html">
                             <div class="sb-nav-link-icon"><i class="fas fa-chart-area"></i></div>
-                            Charts
+                            Check Feedback
                         </a>
                         <a class="nav-link" href="tables.html">
                             <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
@@ -328,7 +328,7 @@
                 </div>
                 <div class="sb-sidenav-footer">
                     <div class="small">Logged in as:</div>
-                    <span id="studentName"></span>
+                    <span id="adminName"></span>
                 </div>
             </nav>
         </div>
@@ -347,7 +347,7 @@
                                     <img src="default_profile_picture.jpg" alt="Profile Picture" id="profilePicture" class="profile-img">
                                 </div>
                                 <div class="col-lg-8">
-                                    <h2 id='studentNameHeading'></h2>
+                                    <h2 id='adminNameHeading'></h2>
                                     <h5>Main Email</h5>
                                     <p id="mainEmail"></p>
                                     <hr>
@@ -361,6 +361,7 @@
                                     <p id="address"></p>
                                     <!-- Update Profile Button -->
                                     <button class="btn-update" data-bs-toggle="modal" data-bs-target="#updateProfileModal">Update Profile</button>
+                                    <button class="btn-update"><a href="changepassword_admin.html" style="color:#f4f4f9;text-decoration:none">Change Password</a></button>
                                 </div>
                             </div>
                         </div>
@@ -408,9 +409,7 @@
                     <div class="d-flex align-items-center justify-content-between small">
                         <div class="text-muted">Copyright &copy; UTM Smart Scan 2024</div>
                         <div>
-                            <a href="#">Privacy Policy</a>
-                            &middot;
-                            <a href="#">Terms &amp; Conditions</a>
+                           
                         </div>
                     </div>
                 </div>

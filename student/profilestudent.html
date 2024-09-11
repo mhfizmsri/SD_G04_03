@@ -13,7 +13,7 @@
     <script type="module">
         // Import Firebase App and Authentication SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getAuth, onAuthStateChanged} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
@@ -63,9 +63,9 @@
                 const detailsData = detailsDoc.data();
                 console.log("Details Data:", detailsData);  // Debugging: Check what data is being fetched
                 document.getElementById('matricNumber').innerText = detailsData.No_Matric || "Not provided";
-                document.getElementById('program').innerText = detailsData.Program || "Not provided";
-                document.getElementById('section').innerText = detailsData.Section || "Not provided";
-                document.getElementById('year').innerText = detailsData.Year || "Not provided";
+                
+                 const yearProgramSection = `${detailsData.Year} ${detailsData.Program} ${detailsData.Section}`;
+                document.getElementById('yearProgramSection').innerText = yearProgramSection || "Not provided";
             } else {
                 console.log("No such details document!");
             }
@@ -331,9 +331,9 @@
                             </nav>
                         </div>
                         <div class="sb-sidenav-menu-heading">Addons</div>
-                        <a class="nav-link" href="charts.html">
+                        <a class="nav-link" href="sendfeedback.html">
                             <div class="sb-nav-link-icon"><i class="fas fa-chart-area"></i></div>
-                            Charts
+                            Send Feedback
                         </a>
                         <a class="nav-link" href="tables.html">
                             <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
@@ -372,14 +372,8 @@
                                     <h5>Matric Number</h5>
                                     <p id="matricNumber"></p>
                                     <hr>
-                                    <h5>Program</h5>
-                                    <p id="program"></p>
-                                    <hr>
-                                    <h5>Section</h5>
-                                    <p id="section"></p>
-                                    <hr>
-                                    <h5>Year</h5>
-                                    <p id="year"></p>
+                                    <h5>Year / Program / Section</Section></h5>
+                                    <p id="yearProgramSection"></p>
                                     <hr>
                                     <h5>Phone Number</h5>
                                     <p id="phoneNumber"></p>
@@ -388,6 +382,7 @@
                                     <p id="address"></p>
                                     <!-- Update Profile Button -->
                                     <button class="btn-update" data-bs-toggle="modal" data-bs-target="#updateProfileModal">Update Profile</button>
+                                    <button class="btn-update"><a href="changepassword_student.html" style="color:#f4f4f9;text-decoration:none">Change Password</a></button>
                                 </div>
                             </div>
                         </div>
