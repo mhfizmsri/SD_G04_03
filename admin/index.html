@@ -15,6 +15,7 @@
             // Import Firebase App and Authentication SDK
             import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
             import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+            import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
         
             // Your Firebase project configuration
             const firebaseConfig = {
@@ -29,6 +30,24 @@
             // Initialize Firebase
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
+            const db = getFirestore(app);
+
+            // Function to fetch and display user data
+            async function fetchUserData(user) {
+                const userId = user.uid;
+
+                // Fetch data from the main user document
+                const userDocRef = doc(db, "users", userId);
+                const userDoc = await getDoc(userDocRef);
+
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    console.log("User Data:", userData);  // Debugging: Check what data is being fetched
+                    document.getElementById('adminName').innerText = userData.Name || "User";
+                } else {
+                    console.log("No such user document!");
+                }
+            }
         
             // Ensure that user is logged in, otherwise redirect to login page
             document.addEventListener("DOMContentLoaded", () => {
@@ -36,6 +55,8 @@
                     if (!user) {
                         // No user is logged in, redirect to login page
                         window.location.href = 'login.html';
+                    }else{
+                        fetchUserData(user);
                     }
                 });
         
@@ -146,7 +167,7 @@
                     </div>
                     <div class="sb-sidenav-footer">
                         <div class="small">Logged in as:</div>
-                        Start Bootstrap
+                        <span id="adminName"></span>
                     </div>
                 </nav>
             </div>
