@@ -51,6 +51,10 @@
                 document.getElementById('phoneNumber').innerText = userData.phone_number || "Not provided";
                 document.getElementById('address').innerText = userData.address || "Not provided";
                 document.getElementById('profilePicture').src = userData.Profile_Picture || "default_profile_picture.jpg";
+                document.getElementById('secondaryEmailInput').value = userData.secondary_email || "";
+                document.getElementById('phoneNumberInput').value = userData.phone_number || "";
+                document.getElementById('addressInput').value = userData.address || "";
+                
             } else {
                 console.log("No such user document!");
             }
