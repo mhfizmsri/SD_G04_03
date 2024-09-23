@@ -3,16 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UTM Final Exam Profile Login</title>
+    <title>UTM SmartScan Login</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- Firebase App (the core Firebase SDK) -->
+    <!-- Custom CSS -->
+    <style>
+        body {
+            background: url('utmkl_building.jpg') no-repeat center center fixed; /* Background image of the UTMKL building */
+            background-size: cover; /* Cover the entire background */
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            background-color: white; /* Header background color */
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+        }
+
+        .header img {
+            max-width: 120px; /* Adjust logo size */
+        }
+
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto; /* Centered and margin from top */
+            padding: 20px;
+            background-color: white; /* White card background */
+            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+            border-radius: 10px; /* Rounded corners */
+            color: black; /* Text color inside the form */
+            text-align: center; /* Center text inside the container */
+        }
+
+        .login-container h4 {
+            color: #5f0808; /* UTM brown color */
+            font-size: 24px; /* Font size for the heading */
+            margin-bottom: 20px; /* Margin below the heading */
+        }
+
+        .form-outline {
+            margin-bottom: 15px;
+        }
+
+        .btn-primary {
+            background-color: #5f0808; /* UTM brown button color */
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #4d0606; /* Darker brown on hover */
+        }
+
+        .small-text {
+            display: block;
+            text-align: center;
+            margin-top: 15px;
+            color: white;
+        }
+
+        .small-text a:hover {
+            text-decoration: underline;
+        }
+
+        .logo {
+            display: block;
+            margin: 0 auto; /* Center the logo */
+            max-width: 200px; /* Adjust size as needed */
+        }
+
+        .gold-cursive {
+            color: #ffd700; /* UTM gold */
+            font-family: 'Brush Script MT', cursive; /* Cursive font */
+            font-size: 24px; /* Font size for the text */
+            margin-bottom: 20px; /* Margin below the text */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <img src="utm_logo.png" alt="UTM Logo">
+    </header>
+
+    <!-- Login Container -->
+    <div class="login-container">
+        <h4 class="gold-cursive">Sign In</h4> <!-- Added Sign In heading -->
+        <img src="utmsslogo.png" alt="UTM SmartScan Logo" class="logo"> <!-- Replace 'your_logo.png' with the path to your logo -->
+        
+        <form>
+            <div class="form-outline">
+                <label for="email">Email address</label>
+                <input type="email" id="email" class="form-control" required>
+            </div>
+            
+            <div class="form-outline">
+                <label for="password">Password</label>
+                <input type="password" id="password" class="form-control" required>
+                <a href="forgotpassword_student.html" class="small text-primary">Forgot password?</a>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block">Login</button>
+        </form>
+        
+        <div class="small-text">
+            <a href="../admin/login.html">Admin Login</a>
+        </div>
+        
+        <div class="small-text">
+            <a href="#!">Terms of Use</a> | <a href="#!">Privacy Policy</a>
+        </div>
+    </div>
+
+    <!-- Firebase Authentication Script -->
     <script type="module">
-        // Import Firebase App and Authentication SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-        // Your Firebase project configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAFLeG3xlGCH9Ci7j8q6GBA1jDVyb3zSM4",
             authDomain: "utmsmartscan.firebaseapp.com",
@@ -22,93 +137,33 @@
             appId: "1:150286309478:web:4ec07841589ecfc34975a7"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
 
-        // Login functionality
         document.addEventListener("DOMContentLoaded", () => {
             const form = document.querySelector("form");
             form.addEventListener("submit", function(e) {
-                e.preventDefault();  // Prevent the form from submitting normally
-
-                // Get email and password from the form inputs
+                e.preventDefault();
                 const email = document.getElementById("email").value;
                 const password = document.getElementById("password").value;
 
-                // Set session persistence
                 setPersistence(auth, browserSessionPersistence)
                     .then(() => {
-                        // Use Firebase to sign in the user
                         return signInWithEmailAndPassword(auth, email, password);
                     })
                     .then((userCredential) => {
-                        // Successfully signed in
                         const user = userCredential.user;
-                        console.log("Login successful! User:", user);  // Debugging purpose
                         alert("Login successful! Redirecting to student dashboard..");
-                        window.location.href = "home.html";  // Redirect to home.html after login
+                        window.location.href = "home.html";
                     })
                     .catch((error) => {
-                        // Handle Errors here
-                        const errorCode = error.code;
-                        const errorMessage = error.message;
-                        console.error("Error: ", errorCode, errorMessage);  // Debugging purpose
-                        alert("Error: " + errorMessage);
+                        alert("Error: " + error.message);
                     });
             });
         });
     </script>
-</head>
-<body>
-    <section class="vh-100" style="background-color: #5f0808;">
-        <div class="container py-5 h-100">
-            <div class="row d-flex justify-content-center align-items-center h-100">
-                <div class="col col-xl-10">
-                    <div class="card" style="border-radius: 1rem;">
-                        <div class="row g-0">
-                            <div class="col-md-6 col-lg-5 d-flex flex-column justify-content-center align-items-center" style="background-color: #F7F7F7;">
-                                <img src="utm_logo.png" alt="UTM Logo" class="img-fluid" style="max-width: 80%; border-radius: 1rem;" />
-                                <img src="student_studying.png" alt="Student Studying" class="img-fluid mt-4" style="max-width: 100%; border-radius: 1rem;" />
-                            </div>
-                            <div class="col-md-6 col-lg-7 d-flex align-items-center">
-                                <div class="card-body p-4 p-lg-5 text-black">
-                                    <form>
-                                        <div class="d-flex align-items-center mb-3 pb-1">
-                                            <i class="fas fa-graduation-cap fa-2x me-3" style="color: #FFD700;"></i>
-                                            <span class="h1 fw-bold mb-0">UTM Student Portal</span>
-                                        </div>
 
-                                        <h5 class="fw-normal mb-3 pb-3" style="letter-spacing: 1px;">Sign into your account</h5>
-
-                                        <div class="form-outline mb-4">
-                                            <label class="form-label" for="email">Email address</label>
-                                            <input type="email" id="email" class="form-control form-control-lg" />
-                                        </div>
-
-                                        <div class="form-outline mb-4">
-                                            <label class="form-label" for="password">Password</label>
-                                            <input type="password" id="password" class="form-control form-control-lg" />
-                                             <a class="small text-primary" href="forgotpassword_student.html" style="color:blue;">Forgot password?</a>
-                                        </div>
-
-                                        <div class="pt-1 mb-4">
-                                            <button class="btn btn-dark btn-lg btn-block" type="submit">Login</button>
-                                        </div>
-
-                                       
-                                
-                                        <a href="#!" class="small text-muted">Terms of use.</a>
-                                        <a href="#!" class="small text-muted">Privacy policy</a>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <a href="../admin/login.html" style="position: fixed; bottom: 20px; right: 20px; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Admin Page</a>
-        </div>
-    </section>
 </body>
 </html>
+
+
