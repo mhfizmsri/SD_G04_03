@@ -9,7 +9,6 @@
     <title>View Students</title>
     <link href="css/styles.css" rel="stylesheet" />
     <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
-    
     <style>
         body {
             background-image: url('utmkl_building.jpg');
@@ -17,7 +16,83 @@
             background-position: center;
         }
     </style>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        // Import Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAFLeG3xlGCH9Ci7j8q6GBA1jDVyb3zSM4",
+            authDomain: "utmsmartscan.firebaseapp.com",
+            projectId: "utmsmartscan",
+            storageBucket: "utmsmartscan.appspot.com",
+            messagingSenderId: "150286309478",
+            appId: "1:150286309478:web:4ec07841589ecfc34975a7"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth();
+
+        // Function to fetch and display students
+        async function fetchStudents() {
+            const studentsTableBody = document.getElementById("studentsTableBody");
+
+            try {
+                // Query Firestore to get users with role "student"
+                const q = query(collection(db, "users"), where("roles", "==", "student"));
+                const querySnapshot = await getDocs(q);
+
+                // Loop through each student and add to the table
+                querySnapshot.forEach((doc) => {
+                    const studentData = doc.data();
+                    const studentRow = `
+                        <tr>
+                            <td><a href="viewstudentdetail.html?student_id=${doc.id}">${studentData.Name || "No Name"}</a></td>
+                            <td>${studentData.ID || "No ID"}</td>
+                            <td>${studentData.Program || "No Program"}</td>
+                        </tr>
+                    `;
+                    studentsTableBody.innerHTML += studentRow;
+                });
+            } catch (error) {
+                console.error("Error fetching students: ", error);
+            }
+        }
+
+        // Check if user is logged in
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                // If the user is not logged in, redirect to login page
+                window.location.href = 'login.html';
+            } else {
+                // If logged in, fetch students data
+                fetchStudents();
+            }
+        });
+
+        const logoutButton = document.getElementById('logout');
+        if (logoutButton) {  // Check if the element exists
+            logoutButton.addEventListener('click', function() {
+                        signOut(auth).then(() => {
+                    // Sign-out successful
+                    window.location.href = 'login.html';  // Redirect to login.html
+                }).catch((error) => {
+                    // Handle errors here
+                     console.error('Sign Out Error', error);
+                });
+            });
+        } else {
+            console.error('Logout button not found');
+        }
+    </script>
 </head>
+
 <body>
     <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
         <a class="navbar-brand ps-3" href="index.html">
@@ -53,18 +128,8 @@
                                     <th>Program</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td><a href="viewstudentdetail.html?student_id=1">John Doe</a></td>
-                                    <td>123456</td>
-                                    <td>Computer Science</td>
-                                </tr>
-                                <tr>
-                                    <td><a href="viewstudentdetail.html?student_id=2">Jane Smith</a></td>
-                                    <td>654321</td>
-                                    <td>Information Technology</td>
-                                </tr>
-                                <!-- Additional students can be dynamically added here -->
+                            <tbody id="studentsTableBody">
+                                <!-- Students will be dynamically added here -->
                             </tbody>
                         </table>
                     </div>
@@ -78,4 +143,3 @@
     <script src="js/datatables-simple-demo.js"></script>
 </body>
 </html>
-
