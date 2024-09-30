@@ -1,0 +1,119 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Set Face - UTM SmartScan</title>
+    <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
+    <link href="css/styles.css" rel="stylesheet" />
+    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+
+    <!-- Ensure TensorFlow.js and face-api.js load properly -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.3.0"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+
+    <!-- Firebase configuration -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAFLeG3xlGCH9Ci7j8q6GBA1jDVyb3zSM4",
+            authDomain: "utmsmartscan.firebaseapp.com",
+            projectId: "utmsmartscan",
+            storageBucket: "utmsmartscan.appspot.com",
+            messagingSenderId: "150286309478",
+            appId: "1:150286309478:web:4ec07841589ecfc34975a7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let userId = "";
+
+        // Monitor authentication status
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                userId = user.uid;
+            }
+        });
+
+        async function updateFaceData(faceDataUrl) {
+            if (!userId) {
+                alert("User is not authenticated");
+                return;
+            }
+
+            const userRef = doc(db, "users", userId);
+            await updateDoc(userRef, {
+                Face: faceDataUrl
+            });
+            alert("Face data has been updated successfully!");
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h2>Set Face Recognition</h2>
+        <button id="scanButton">Scan Face</button>
+        <video id="video" width="720" height="560" style="display:none;"></video>
+        <canvas id="overlay" width="720" height="560" style="display:none;"></canvas>
+    </div>
+
+    <script>
+        const video = document.getElementById("video");
+        const canvas = document.getElementById("overlay");
+        const scanButton = document.getElementById("scanButton");
+        let faceMatcher;
+
+        scanButton.addEventListener("click", async () => {
+            video.style.display = "block";
+            canvas.style.display = "block";
+
+            const constraints = {
+                video: true
+            };
+
+            navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
+                video.srcObject = stream;
+                video.play();
+            });
+
+            await loadModels();
+
+            video.addEventListener("play", () => {
+                const displaySize = { width: video.width, height: video.height };
+                faceapi.matchDimensions(canvas, displaySize);
+                const interval = setInterval(async () => {
+                    const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
+                    const resizedDetections = faceapi.resizeResults(detections, displaySize);
+
+                    canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+                    faceapi.draw.drawDetections(canvas, resizedDetections);
+                    faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+
+                    if (detections.length > 0) {
+                        clearInterval(interval);
+                        stream.getTracks().forEach(track => track.stop()); // Stop video stream
+                        video.style.display = "none";
+                        canvas.style.display = "none";
+
+                        const faceDataUrl = canvas.toDataURL(); // Convert the canvas data to image URL
+                        await updateFaceData(faceDataUrl); // Update Firebase with the face data
+                    }
+                }, 100);
+            });
+        });
+
+        async function loadModels() {
+            await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
+            await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
+            await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
+        }
+    </script>
+</body>
+</html>
