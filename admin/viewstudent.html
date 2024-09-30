@@ -21,7 +21,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-        import { getFirestore, collection, query, where, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs, doc, deleteDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAFLeG3xlGCH9Ci7j8q6GBA1jDVyb3zSM4",
@@ -48,6 +48,7 @@
             }
         };
 
+        // Fetch students from Firestore
         async function fetchStudents() {
             const studentsTableBody = document.getElementById("studentsTableBody");
 
@@ -65,6 +66,7 @@
                             <td>${studentData.Program || "No Program"}</td>
                             <td>
                                 <button class="btn btn-danger" onclick="deleteStudent('${studentId}')">Delete</button>
+                                <button class="btn btn-primary" onclick="openEditModal('${studentId}')">Edit</button>
                             </td>
                         </tr>
                     `;
@@ -74,6 +76,59 @@
                 console.error("Error fetching students: ", error);
             }
         }
+
+        // Open the edit modal and populate fields
+        window.openEditModal = async function(studentId) {
+            const studentRef = doc(db, "users", studentId);
+            const studentSnapshot = await getDoc(studentRef);
+            const studentData = studentSnapshot.data();
+
+            // Populate modal fields with student data
+            document.getElementById('studentId').value = studentId;
+            document.getElementById('name').value = studentData.Name || "";
+            document.getElementById('address').value = studentData.address || "";
+            document.getElementById('email').value = studentData.email || "";
+            document.getElementById('phone_number').value = studentData.phone_number || "";
+            document.getElementById('secondary_email').value = studentData.secondary_email || "";
+
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('editModal'));
+            modal.show();
+        };
+
+        // Handle form submission for editing a student
+        window.submitEditForm = async function() {
+            const studentId = document.getElementById('studentId').value;
+            const name = document.getElementById('name').value;
+            const address = document.getElementById('address').value;
+            const email = document.getElementById('email').value;
+            const phoneNumber = document.getElementById('phone_number').value;
+            const secondaryEmail = document.getElementById('secondary_email').value;
+
+            const studentRef = doc(db, "users", studentId);
+
+            try {
+                await updateDoc(studentRef, {
+                    Name: name,
+                    Address: address,
+                    Email: email,
+                    Phone_Number: phoneNumber,
+                    Secondary_Email: secondaryEmail
+                });
+                console.log("Student updated successfully");
+
+                // Refresh the student list
+                document.getElementById(studentId).getElementsByTagName('td')[0].innerText = name;
+                document.getElementById(studentId).getElementsByTagName('td')[1].innerText = studentId; // Assuming ID stays the same
+                document.getElementById(studentId).getElementsByTagName('td')[2].innerText = address;
+
+                // Close the modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
+                modal.hide();
+            } catch (error) {
+                console.error("Error updating student: ", error);
+            }
+        };
 
         onAuthStateChanged(auth, (user) => {
             if (!user) {
@@ -139,6 +194,45 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Student Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Edit Student</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="studentId">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Address</label>
+                        <input type="text" class="form-control" id="address" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="phone_number" class="form-label">Phone Number</label>
+                        <input type="text" class="form-control" id="phone_number" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="secondary_email" class="form-label">Secondary Email</label>
+                        <input type="email" class="form-control" id="secondary_email" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="submitEditForm()">Save changes</button>
                 </div>
             </div>
         </div>
