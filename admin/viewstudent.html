@@ -53,7 +53,7 @@
                     const studentData = doc.data();
                     const studentRow = `
                         <tr>
-                            <td><a href="viewstudentdetail.html?student_id=${doc.id}">${studentData.Name || "No Name"}</a></td>
+                            <td>${studentData.Name || "No Name"}</td>
                             <td>${studentData.ID || "No ID"}</td>
                             <td>${studentData.Program || "No Program"}</td>
                         </tr>
