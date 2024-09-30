@@ -19,12 +19,10 @@
 
     <!-- Firebase SDKs -->
     <script type="module">
-        // Import Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAFLeG3xlGCH9Ci7j8q6GBA1jDVyb3zSM4",
             authDomain: "utmsmartscan.firebaseapp.com",
@@ -34,28 +32,40 @@
             appId: "1:150286309478:web:4ec07841589ecfc34975a7"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth();
 
-        // Function to fetch and display students
+        // Make deleteStudent function globally accessible
+        window.deleteStudent = async function(studentId) {
+            try {
+                const studentRef = doc(db, "users", studentId);
+                await deleteDoc(studentRef);
+                document.getElementById(studentId).remove();
+                console.log("Student deleted successfully");
+            } catch (error) {
+                console.error("Error deleting student: ", error);
+            }
+        };
+
         async function fetchStudents() {
             const studentsTableBody = document.getElementById("studentsTableBody");
 
             try {
-                // Query Firestore to get users with role "student"
                 const q = query(collection(db, "users"), where("roles", "==", "student"));
                 const querySnapshot = await getDocs(q);
 
-                // Loop through each student and add to the table
                 querySnapshot.forEach((doc) => {
                     const studentData = doc.data();
+                    const studentId = doc.id; // Get the document ID
                     const studentRow = `
-                        <tr>
+                        <tr id="${studentId}">
                             <td>${studentData.Name || "No Name"}</td>
                             <td>${studentData.ID || "No ID"}</td>
                             <td>${studentData.Program || "No Program"}</td>
+                            <td>
+                                <button class="btn btn-danger" onclick="deleteStudent('${studentId}')">Delete</button>
+                            </td>
                         </tr>
                     `;
                     studentsTableBody.innerHTML += studentRow;
@@ -65,26 +75,21 @@
             }
         }
 
-        // Check if user is logged in
         onAuthStateChanged(auth, (user) => {
             if (!user) {
-                // If the user is not logged in, redirect to login page
                 window.location.href = 'login.html';
             } else {
-                // If logged in, fetch students data
                 fetchStudents();
             }
         });
 
         const logoutButton = document.getElementById('logout');
-        if (logoutButton) {  // Check if the element exists
+        if (logoutButton) {
             logoutButton.addEventListener('click', function() {
-                        signOut(auth).then(() => {
-                    // Sign-out successful
-                    window.location.href = 'login.html';  // Redirect to login.html
+                signOut(auth).then(() => {
+                    window.location.href = 'login.html';
                 }).catch((error) => {
-                    // Handle errors here
-                     console.error('Sign Out Error', error);
+                    console.error('Sign Out Error', error);
                 });
             });
         } else {
@@ -126,6 +131,7 @@
                                     <th>Student Name</th>
                                     <th>Student ID</th>
                                     <th>Program</th>
+                                    <th>Actions</th> <!-- Add Actions column -->
                                 </tr>
                             </thead>
                             <tbody id="studentsTableBody">
