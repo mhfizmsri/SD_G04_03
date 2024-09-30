@@ -110,17 +110,17 @@
             try {
                 await updateDoc(studentRef, {
                     Name: name,
-                    Address: address,
-                    Email: email,
-                    Phone_Number: phoneNumber,
-                    Secondary_Email: secondaryEmail
+                    address: address,
+                    email: email,
+                    phone_number: phoneNumber,
+                    secondary_email: secondaryEmail
                 });
                 console.log("Student updated successfully");
 
                 // Refresh the student list
                 document.getElementById(studentId).getElementsByTagName('td')[0].innerText = name;
                 document.getElementById(studentId).getElementsByTagName('td')[1].innerText = studentId; // Assuming ID stays the same
-                document.getElementById(studentId).getElementsByTagName('td')[2].innerText = address;
+                //document.getElementById(studentId).getElementsByTagName('td')[2].innerText = address;
 
                 // Close the modal
                 const modal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
