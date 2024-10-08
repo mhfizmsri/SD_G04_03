@@ -46,32 +46,48 @@
 
         // Fetch students from Firestore
         async function fetchStudents() {
-            const studentsTableBody = document.getElementById("studentsTableBody");
+    const studentsTableBody = document.getElementById("studentsTableBody");
 
-            try {
-                const q = query(collection(db, "users"), where("roles", "==", "student"));
-                const querySnapshot = await getDocs(q);
+    try {
+        const q = query(collection(db, "users"), where("roles", "==", "student"));
+        const querySnapshot = await getDocs(q);
 
-                querySnapshot.forEach((doc) => {
-                    const studentData = doc.data();
-                    const studentId = doc.id; // Get the document ID
-                    const studentRow = `
-                        <tr id="${studentId}">
-                            <td>${studentData.Name || "No Name"}</td>
-                            <td>${studentData.ID || "No ID"}</td>
-                            <td>${studentData.Program || "No Program"}</td>
-                            <td>
-                                <button class="btn btn-danger" onclick="deleteStudent('${studentId}')">Delete</button>
-                                <button class="btn btn-primary" onclick="openEditModal('${studentId}')">Edit</button>
-                            </td>
-                        </tr>
-                    `;
-                    studentsTableBody.innerHTML += studentRow;
-                });
-            } catch (error) {
-                console.error("Error fetching students: ", error);
+        for (const studentDoc of querySnapshot.docs) {  // Changed 'doc' to 'studentDoc'
+            const studentData = studentDoc.data();
+            const studentId = studentDoc.id; // Get the document ID
+
+            // Fetch data from the nested "Student_detail/Details" document
+            const detailsDocRef = doc(db, "users", studentId, "Student_detail", "Details");
+            const detailsDoc = await getDoc(detailsDocRef);
+
+            let program = "";
+            if (detailsDoc.exists()) {
+                const detailsData = detailsDoc.data();
+                console.log("Details Data:", detailsData);  // Debugging: Check what data is being fetched
+                program = `${detailsData.Program}`; // Assuming "Program" is a field in "Details"
+            } else {
+                console.log("No such details document!");
             }
+
+            const studentRow = `
+                <tr id="${studentId}">
+                    <td>${studentData.Name || "No Name"}</td>
+                    <td>${studentData.ID || "No ID"}</td>
+                    <td>${program || "No Program"}</td> <!-- Use fetched program from Details -->
+                    <td>
+                        <button class="btn btn-danger" onclick="deleteStudent('${studentId}')">Delete</button>
+                        <button class="btn btn-primary" onclick="openEditModal('${studentId}')">Edit</button>
+                    </td>
+                </tr>
+            `;
+            studentsTableBody.innerHTML += studentRow;
         }
+    } catch (error) {
+        console.error("Error fetching students: ", error);
+    }
+}
+
+
 
         // Open the edit modal and populate fields
         window.openEditModal = async function(studentId) {
