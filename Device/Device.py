@@ -4,10 +4,14 @@ from firebase_admin import credentials, firestore
 import face_recognition
 import numpy as np
 from datetime import datetime
-import time
-from gpiozero import Buzzer
-from time import sleep
-buzzer = Buzzer(20)
+import time  # Use time directly
+import lgpio
+
+# GPIO setup
+chip = lgpio.gpiochip_open(0)
+buzzer_pin = 20
+lgpio.gpio_claim_output(chip, buzzer_pin)
+
 # Initialize Firebase
 cred = credentials.Certificate("/home/muhafiz/Downloads/utmsmartscan-firebase-adminsdk-5gtap-ee911ca231.json")
 firebase_admin.initialize_app(cred)
@@ -57,55 +61,83 @@ def mark_attendance(user_data):
     })
     print(f"Attendance marked for {user_data['Name']}.")
 
+def draw_green_tick(frame):
+    # Draw a green tick mark
+    cv2.line(frame, (150, 100), (200, 150), (0, 255, 0), 5)  # First part of the tick
+    cv2.line(frame, (200, 150), (275, 75), (0, 255, 0), 5)   # Second part of the tick
+
+def draw_red_cross(frame):
+    # Draw a red cross
+    cv2.line(frame, (150, 100), (275, 225), (0, 0, 255), 5)  # First diagonal line
+    cv2.line(frame, (275, 100), (150, 225), (0, 0, 255), 5)
+
 def main():
-    cap = cv2.VideoCapture(0)
-    display_message = ""
-    display_message_start = 0
+    try:
+        cap = cv2.VideoCapture(0)
+        display_message = ""
+        display_message_start = 0
+        display_symbol = None
 
-    while True:
-        ret, frame = cap.read()
-        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(gray, 1.1, 4)
+        while True:
+            ret, frame = cap.read()
+            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            faces = face_cascade.detectMultiScale(gray, 1.1, 4)
 
-        if time.time() - display_message_start > 5:
-            display_message = ""
+            if time.time() - display_message_start > 5:
+                display_message = ""
+                display_symbol = None
 
-        for (x, y, w, h) in faces:
-            cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
-
-        # Check for face recognition and attendance marking
-        if not display_message:
             for (x, y, w, h) in faces:
-                face_encoding = face_recognition.face_encodings(rgb_frame, [(y, x+w, y+h, x)])
-                if face_encoding:
-                    face_descriptor = face_encoding[0]
-                    user_data = check_face_in_firebase(face_descriptor)
-                    if user_data:
-                        mark_attendance(user_data)
-                        buzzer.on()
-                        sleep(1)
-                        buzzer.off()
-                        sleep(1)
-                        display_message = f"Access Granted: {user_data['Name']}"
-                    else:
-                        display_message = "Access Denied"
-                    display_message_start = time.time()
+                cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
 
-        # Display the message on the screen
-        if display_message:
-            cv2.putText(frame, display_message, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0) if "Granted" in display_message else (0, 0, 255), 2)
+            # Check for face recognition and attendance marking
+            if not display_message:
+                for (x, y, w, h) in faces:
+                    face_encoding = face_recognition.face_encodings(rgb_frame, [(y, x+w, y+h, x)])
+                    if face_encoding:
+                        face_descriptor = face_encoding[0]
+                        user_data = check_face_in_firebase(face_descriptor)
+                        if user_data:
+                            mark_attendance(user_data)
+                            lgpio.gpio_write(chip, buzzer_pin, 1)  # Turn buzzer ON
+                            time.sleep(0.2)  # Wait for 0.5 seconds
+                            lgpio.gpio_write(chip, buzzer_pin, 0)  # Turn buzzer OFF
+                            display_message = f"Scan Success: {user_data['Name']}"
+                            display_symbol = "success"
+                        else:
+                            lgpio.gpio_write(chip, buzzer_pin, 1)  # Turn buzzer ON
+                            time.sleep(1)  # Wait for 0.5 seconds
+                            lgpio.gpio_write(chip, buzzer_pin, 0)  # Turn buzzer OFF
+                            display_message = "Scan Denied"
+                            display_symbol = "failure"
+                        display_message_start = time.time()
 
-        # Show the frame
-        cv2.imshow('Face Recognition', frame)
+            # Display the message on the screen
+            if display_message:
+                if "Success" in display_message:
+                 text_color = (0, 255, 0)  # Green for success
+                else:
+                    text_color = (0, 0, 255)  # Red for failure
+                cv2.putText(frame, display_message, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, text_color, 2)
+            
+            if display_symbol == "success":
+                draw_green_tick(frame)  # Draw green tick on frame
+            elif display_symbol == "failure":
+                draw_red_cross(frame)
 
-        # Check if 'k' is pressed to stop the program
-        if cv2.waitKey(1) & 0xFF == ord('k'):  # 'k' is the kill button
-            print("Kill button pressed. Exiting the program.")
-            break
+            # Show the frame
+            cv2.imshow('Face Recognition', frame)
 
-    cap.release()
-    cv2.destroyAllWindows()
+            # Check if 'k' is pressed to stop the program
+            if cv2.waitKey(1) & 0xFF == ord('k'):  # 'k' is the kill button
+                print("Kill button pressed. Exiting the program.")
+                break
+    finally:
+        # Clean up GPIO and release resources when the program exits
+        lgpio.gpio_write(chip, buzzer_pin, 0)  # Ensure the buzzer is off
+        cap.release()
+        cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     main()
