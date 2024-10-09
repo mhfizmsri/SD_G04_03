@@ -117,6 +117,13 @@
             const phoneNumber = document.getElementById('phone_number').value;
             const secondaryEmail = document.getElementById('secondary_email').value;
 
+            // Validate the email to ensure it ends with @utm.graduate.my
+            const allowedDomain = "@graduate.utm.my";
+            if (!email.endsWith(allowedDomain)) {
+                alert("Email must end with " + allowedDomain);
+                return;  // Stop form submission
+            }
+
             const studentRef = doc(db, "users", studentId);
 
             try {
@@ -128,6 +135,7 @@
                     secondary_email: secondaryEmail
                 });
                 console.log("Student updated successfully");
+                alert("Student updated successfully");
 
                 // Refresh the student list
                 document.getElementById(studentId).getElementsByTagName('td')[0].innerText = name;
