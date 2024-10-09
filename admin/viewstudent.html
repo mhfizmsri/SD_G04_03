@@ -9,9 +9,6 @@
     <title>View Students</title>
     <link href="css/styles.css" rel="stylesheet" />
     <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
-    <style>
-   
-    </style>
 
     <!-- Firebase SDKs -->
     <script type="module">
@@ -32,6 +29,54 @@
         const db = getFirestore(app);
         const auth = getAuth();
 
+        // Fetch students from Firestore
+        async function fetchStudents() {
+            const studentsTableBody = document.getElementById("studentsTableBody");
+
+            try {
+                const q = query(collection(db, "users"), where("roles", "==", "student"));
+                const querySnapshot = await getDocs(q);
+
+                for (const studentDoc of querySnapshot.docs) {
+                    const studentData = studentDoc.data();
+                    const studentId = studentDoc.id; // Get the document ID
+
+                    // Fetch data from the nested "Student_detail/Details" document
+                    const detailsDocRef = doc(db, "users", studentId, "Student_detail", "Details");
+                    const detailsDoc = await getDoc(detailsDocRef);
+
+                    let program = "";
+                    let noMatric = "";
+
+                    if (detailsDoc.exists()) {
+                        const detailsData = detailsDoc.data();
+                        program = `${detailsData.Program}` || "No Program";
+                        noMatric = `${detailsData.No_Matric}` || "No Matric";
+                    } else {
+                        program = "No Program";
+                        noMatric = "No Matric";
+                    }
+
+                    // Update the studentRow to include No_Matric after Program
+                    const studentRow = `
+                        <tr id="${studentId}">
+                            <td>${studentData.Name || "No Name"}</td>
+                            <td>${studentData.ID || "No ID"}</td>
+                            <td>${program}</td>
+                            <td>${noMatric}</td>
+                            <td>
+                                <button class="btn btn-danger" onclick="deleteStudent('${studentId}')">Delete</button>
+                                <button class="btn btn-primary" onclick="openEditModal('${studentId}')">Edit</button>
+                            </td>
+                        </tr>
+                    `;
+                    studentsTableBody.innerHTML += studentRow;
+                }
+            } catch (error) {
+                console.error("Error fetching students: ", error);
+            }
+        }
+
         // Make deleteStudent function globally accessible
         window.deleteStudent = async function(studentId) {
             try {
@@ -44,66 +89,20 @@
             }
         };
 
-        // Fetch students from Firestore
-        async function fetchStudents() {
-    const studentsTableBody = document.getElementById("studentsTableBody");
-
-    try {
-        const q = query(collection(db, "users"), where("roles", "==", "student"));
-        const querySnapshot = await getDocs(q);
-
-        for (const studentDoc of querySnapshot.docs) {  // Changed 'doc' to 'studentDoc'
-            const studentData = studentDoc.data();
-            const studentId = studentDoc.id; // Get the document ID
-
-            // Fetch data from the nested "Student_detail/Details" document
-            const detailsDocRef = doc(db, "users", studentId, "Student_detail", "Details");
-            const detailsDoc = await getDoc(detailsDocRef);
-
-            let program = "";
-            if (detailsDoc.exists()) {
-                const detailsData = detailsDoc.data();
-                console.log("Details Data:", detailsData);  // Debugging: Check what data is being fetched
-                program = `${detailsData.Program}`; // Assuming "Program" is a field in "Details"
-            } else {
-                console.log("No such details document!");
-            }
-
-            const studentRow = `
-                <tr id="${studentId}">
-                    <td>${studentData.Name || "No Name"}</td>
-                    <td>${studentData.ID || "No ID"}</td>
-                    <td>${program || "No Program"}</td> <!-- Use fetched program from Details -->
-                    <td>
-                        <button class="btn btn-danger" onclick="deleteStudent('${studentId}')">Delete</button>
-                        <button class="btn btn-primary" onclick="openEditModal('${studentId}')">Edit</button>
-                    </td>
-                </tr>
-            `;
-            studentsTableBody.innerHTML += studentRow;
-        }
-    } catch (error) {
-        console.error("Error fetching students: ", error);
-    }
-}
-
-
-
-        // Open the edit modal and populate fields
+        // Open the edit modal and populate fields (Removed No_Matric, Program, Section, Year)
         window.openEditModal = async function(studentId) {
             const studentRef = doc(db, "users", studentId);
             const studentSnapshot = await getDoc(studentRef);
             const studentData = studentSnapshot.data();
 
-            // Populate modal fields with student data
+            // Populate main student fields
             document.getElementById('studentId').value = studentId;
             document.getElementById('name').value = studentData.Name || "";
             document.getElementById('address').value = studentData.address || "";
             document.getElementById('email').value = studentData.email || "";
             document.getElementById('phone_number').value = studentData.phone_number || "";
-            document.getElementById('secondary_email').value = studentData.secondary_email || "";
 
-            // Show the modal
+            // Show the modal (No_Matric, Program, Section, and Year fields are removed from the edit modal)
             const modal = new bootstrap.Modal(document.getElementById('editModal'));
             modal.show();
         };
@@ -115,7 +114,6 @@
             const address = document.getElementById('address').value;
             const email = document.getElementById('email').value;
             const phoneNumber = document.getElementById('phone_number').value;
-            const secondaryEmail = document.getElementById('secondary_email').value;
 
             // Validate the email to ensure it ends with @utm.graduate.my
             const allowedDomain = "@graduate.utm.my";
@@ -127,20 +125,19 @@
             const studentRef = doc(db, "users", studentId);
 
             try {
+                // Update main student data
                 await updateDoc(studentRef, {
                     Name: name,
                     address: address,
                     email: email,
-                    phone_number: phoneNumber,
-                    secondary_email: secondaryEmail
+                    phone_number: phoneNumber
                 });
+
                 console.log("Student updated successfully");
                 alert("Student updated successfully");
 
-                // Refresh the student list
+                // Refresh the student list or update the UI accordingly
                 document.getElementById(studentId).getElementsByTagName('td')[0].innerText = name;
-                document.getElementById(studentId).getElementsByTagName('td')[1].innerText = studentId; // Assuming ID stays the same
-                //document.getElementById(studentId).getElementsByTagName('td')[2].innerText = address;
 
                 // Close the modal
                 const modal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
@@ -206,7 +203,8 @@
                                     <th>Student Name</th>
                                     <th>Student ID</th>
                                     <th>Program</th>
-                                    <th>Actions</th> <!-- Add Actions column -->
+                                    <th>No Matric</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="studentsTableBody">
@@ -229,6 +227,8 @@
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="studentId">
+
+                    <!-- Existing fields (No Matric, Program, Section, Year removed) -->
                     <div class="mb-3">
                         <label for="name" class="form-label">Name</label>
                         <input type="text" class="form-control" id="name" required>
@@ -244,10 +244,6 @@
                     <div class="mb-3">
                         <label for="phone_number" class="form-label">Phone Number</label>
                         <input type="text" class="form-control" id="phone_number" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="secondary_email" class="form-label">Secondary Email</label>
-                        <input type="email" class="form-control" id="secondary_email" required>
                     </div>
                 </div>
                 <div class="modal-footer">
