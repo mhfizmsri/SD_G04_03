@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subject List</title>
+
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+        // Your Firebase project configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAFLeG3xlGCH9Ci7j8q6GBA1jDVyb3zSM4",
+            authDomain: "utmsmartscan.firebaseapp.com",
+            projectId: "utmsmartscan",
+            storageBucket: "utmsmartscan.appspot.com",
+            messagingSenderId: "150286309478",
+            appId: "1:150286309478:web:4ec07841589ecfc34975a7"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+            }
+        });
+
+        // Function to fetch subject data from Firestore
+        async function fetchSubjects() {
+            try {
+                const subjectCollection = collection(db, "subject"); // Fetch from "subject" collection
+                const subjectSnapshot = await getDocs(subjectCollection);
+                const subjectList = subjectSnapshot.docs.map(doc => doc.data()); // Get an array of subjects
+
+                // Call function to populate the table with the fetched data
+                populateSubjectTable(subjectList);
+            } catch (error) {
+                console.error("Error fetching subjects: ", error);
+            }
+        }
+
+        // Function to populate the HTML table with subject data
+        function populateSubjectTable(subjectList) {
+            const tableBody = document.getElementById('subjectTableBody');
+            
+            subjectList.forEach((subject, index) => {
+                // Create a new row
+                const row = document.createElement('tr');
+
+                // Insert cells for subject code and subject name
+                const cell1 = document.createElement('td');
+                const cell2 = document.createElement('td');
+                const cell3 = document.createElement('td');
+
+                cell1.textContent = index + 1; // Row number
+                cell2.textContent = subject.subject_code; // Subject code
+                cell3.textContent = subject.subject_name; // Subject name
+
+                // Append the cells to the row
+                row.appendChild(cell1);
+                row.appendChild(cell2);
+                row.appendChild(cell3);
+
+                // Append the row to the table body
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Fetch and display the subjects when the page loads
+        window.onload = function () {
+            fetchSubjects();
+        };
+
+    </script>
+</head>
+<body>
+    <h2>Subject List</h2>
+
+    <table border="1" cellpadding="10">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Subject Code</th>
+                <th>Subject Name</th>
+            </tr>
+        </thead>
+        <tbody id="subjectTableBody">
+            <!-- Rows will be inserted here dynamically -->
+        </tbody>
+    </table>
+</body>
+</html>
