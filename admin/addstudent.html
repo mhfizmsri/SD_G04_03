@@ -63,6 +63,9 @@
 
                 alert("Student added successfully!");
                 document.getElementById("studentForm").reset(); // Reset form
+                setTimeout(() => {
+                          window.location.href = 'index.html';
+                      }, 2000);
             } catch (error) {
                 console.error("Error adding student:", error.message);
                 alert("Error: " + error.message);
