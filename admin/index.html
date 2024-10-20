@@ -21,7 +21,6 @@
 
         /* Background image styling */
 
-
         /* Content area styling */
         #layoutSidenav_content {
             position: relative;
@@ -123,20 +122,20 @@
                             Add Student
                         </a>
                         <a class="nav-link" href="viewstudent.html">
-                            <div class="sb-nav-link-icon"><i class="fas fa-user-plus"></i></div>
-                            view Student
+                            <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>
+                            View Students
                         </a>
                         <a class="nav-link" href="addsubject.html">
-                            <div class="sb-nav-link-icon"><i class="fas fa-user-plus"></i></div>
+                            <div class="sb-nav-link-icon"><i class="fas fa-book"></i></div>
                             Add Subject
                         </a>
                         <a class="nav-link" href="viewsubject.html">
-                            <div class="sb-nav-link-icon"><i class="fas fa-user-plus"></i></div>
-                            View Subject
+                            <div class="sb-nav-link-icon"><i class="fas fa-book-open"></i></div>
+                            View Subjects
                         </a>
                         <div class="sb-sidenav-menu-heading">Addons</div>
                         <a class="nav-link" href="checkfeedback.html">
-                            <div class="sb-nav-link-icon"><i class="fas fa-chart-area"></i></div>
+                            <div class="sb-nav-link-icon"><i class="fas fa-comment-dots"></i></div>
                             Feedback
                         </a>
                         <a class="nav-link" href="tables.html">
@@ -164,19 +163,22 @@
 
                         <div class="col-xl-3 col-md-6">
                             <div class="card bg-primary text-white mb-4">
-                                <div class="card-body">
-                                    <h5>View Subject</h5>
+                                <div class="card-body d-flex align-items-center">
+                                    <i class="fas fa-book-open fa-2x me-2"></i>
+                                    <h5 class="mb-0">View Subjects</h5>
                                 </div>
                                 <div class="card-footer d-flex align-items-center justify-content-between">
-                                    <a class="small text-white stretched-link" href="viewsubject.html">Go to View Student</a>
+                                    <a class="small text-white stretched-link" href="viewsubject.html">Go to View Subjects</a>
                                     <div class="small text-white"><i class="fas fa-angle-right"></i></div>
                                 </div>
                             </div>
                         </div>
+                    
                         <div class="col-xl-3 col-md-6">
-                            <div class="card bg-primary text-white mb-4">
-                                <div class="card-body">
-                                    <h5>Add New Subject</h5>
+                            <div class="card bg-success text-white mb-4"> <!-- Changed to bg-success -->
+                                <div class="card-body d-flex align-items-center">
+                                    <i class="fas fa-plus fa-2x me-2"></i>
+                                    <h5 class="mb-0">Add New Subject</h5>
                                 </div>
                                 <div class="card-footer d-flex align-items-center justify-content-between">
                                     <a class="small text-white stretched-link" href="addsubject.html">Go to Add Subject</a>
@@ -184,11 +186,13 @@
                                 </div>
                             </div>
                         </div>
+                    
                         <!-- Add Student Card -->
                         <div class="col-xl-3 col-md-6">
-                            <div class="card bg-primary text-white mb-4">
-                                <div class="card-body">
-                                    <h5>Add New Student</h5>
+                            <div class="card bg-info text-white mb-4"> <!-- Changed to bg-info -->
+                                <div class="card-body d-flex align-items-center">
+                                    <i class="fas fa-user-plus fa-2x me-2"></i>
+                                    <h5 class="mb-0">Add New Student</h5>
                                 </div>
                                 <div class="card-footer d-flex align-items-center justify-content-between">
                                     <a class="small text-white stretched-link" href="addstudent.html">Go to Add Student</a>
@@ -196,12 +200,13 @@
                                 </div>
                             </div>
                         </div>
-
+                    
                         <!-- View Student Card -->
                         <div class="col-xl-3 col-md-6">
-                            <div class="card bg-secondary text-white mb-4">
-                                <div class="card-body">
-                                    <h5>View Students</h5>
+                            <div class="card bg-warning text-white mb-4"> <!-- Changed to bg-warning -->
+                                <div class="card-body d-flex align-items-center">
+                                    <i class="fas fa-users fa-2x me-2"></i>
+                                    <h5 class="mb-0">View Students</h5>
                                 </div>
                                 <div class="card-footer d-flex align-items-center justify-content-between">
                                     <a class="small text-white stretched-link" href="viewstudent.html">Go to View Students</a>
@@ -210,7 +215,6 @@
                             </div>
                         </div>
                     </div>
-
                     <ol class="breadcrumb mb-4">
                         <li class="breadcrumb-item active">Dashboard</li>
                     </ol>
@@ -234,6 +238,7 @@
     <script src="js/scripts.js"></script>
 </body>
 </html>
+
 
 
 

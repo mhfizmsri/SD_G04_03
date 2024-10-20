@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add New Subject</title>
-
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-        // Your Firebase project configuration
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAFLeG3xlGCH9Ci7j8q6GBA1jDVyb3zSM4",
             authDomain: "utmsmartscan.firebaseapp.com",
@@ -30,49 +30,83 @@
             }
         });
 
-        // Handle form submission
-        const addSubjectForm = document.getElementById('addSubjectForm');
-        addSubjectForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
+        document.addEventListener("DOMContentLoaded", () => {
+            const addSubjectForm = document.getElementById('addSubjectForm');
+            addSubjectForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
 
-            // Get form values
-            const subjectName = document.getElementById('subjectName').value;
-            const subjectCode = document.getElementById('subjectCode').value;
+                // Get form values
+                const subjectName = document.getElementById('subjectName').value;
+                const subjectCode = document.getElementById('subjectCode').value;
 
-            try {
-                // Add new subject document to Firestore
-                const docRef = await addDoc(collection(db, "subject"), {
-                    subject_name: subjectName,
-                    subject_code: subjectCode,
-                });
+                try {
+                    // Add new subject document to Firestore
+                    const docRef = await addDoc(collection(db, "subject"), {
+                        subject_name: subjectName,
+                        subject_code: subjectCode,
+                    });
 
-                console.log("New subject created with ID: ", docRef.id);
-                alert("Subject created successfully!");
-
-                // Clear the form
-                addSubjectForm.reset();
-            } catch (error) {
-                console.error("Error adding subject: ", error);
-                alert("Failed to create the subject");
-            }
+                    console.log("New subject created with ID: ", docRef.id);
+                    alert("Subject created successfully!");
+                    addSubjectForm.reset();
+                } catch (error) {
+                    console.error("Error adding subject: ", error);
+                    alert("Failed to create the subject");
+                }
+            });
         });
-
-        
     </script>
 </head>
-<body>
-    
-    <h3>Create New Subject</h3>
-    <form id="addSubjectForm">
-        <label for="subjectName">Subject Name:</label><br>
-        <input type="text" id="subjectName" name="subjectName" required><br><br>
-        
-        <label for="subjectCode">Subject Code:</label><br>
-        <input type="text" id="subjectCode" name="subjectCode" required><br><br>
+<body class="sb-nav-fixed">
 
-        <button type="submit">Create Subject</button>
-    </form>
+    <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
+        <!-- Navbar Brand-->
+        <a class="navbar-brand ps-3" href="index.html">
+            <img src="utm_logo.png" alt="UTM Logo" style="height: 40px; margin-right: 10px;" />
+            <img src="utmsslogo.png" alt="UTM SmartScan Logo" style="height: 40px;" />
+        </a>
+        <!-- Right-aligned Navbar-->
+        <ul class="navbar-nav ms-auto">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-user fa-fw"></i></a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                    <li><a class="dropdown-item" href="profileadmin.html">Profile</a></li>
+                    <li><a class="dropdown-item" href="#!">Settings</a></li>
+                    <li><hr class="dropdown-divider" /></li>
+                    <li><a class="dropdown-item" href="login.html" id="logout">Logout</a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
 
-    
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="card shadow-lg border-0 rounded-lg">
+                    <div class="card-header text-center">
+                        <h3 class="font-weight-light">Create New Subject</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="addSubjectForm">
+                            <div class="form-floating mb-3">
+                                <input class="form-control" id="subjectName" type="text" placeholder="Subject Name" required>
+                                <label for="subjectName">Subject Name</label>
+                            </div>
+                            <div class="form-floating mb-3">
+                                <input class="form-control" id="subjectCode" type="text" placeholder="Subject Code" required>
+                                <label for="subjectCode">Subject Code</label>
+                            </div>
+                            <button class="btn btn-primary" type="submit">Create Subject</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
+
