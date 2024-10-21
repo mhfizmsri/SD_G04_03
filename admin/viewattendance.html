@@ -11,7 +11,7 @@
         // Firebase SDK imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
         // Firebase configuration
         const firebaseConfig = {
@@ -39,7 +39,7 @@
             try {
                 const attendanceCollection = collection(db, "attendance");
                 const attendanceSnapshot = await getDocs(attendanceCollection);
-                const attendanceList = attendanceSnapshot.docs.map(doc => doc.data());
+                const attendanceList = attendanceSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
                 populateAttendanceTable(attendanceList);
             } catch (error) {
@@ -55,17 +55,42 @@
                 const cell1 = document.createElement('td');
                 const cell2 = document.createElement('td');
                 const cell3 = document.createElement('td');
+                const cell4 = document.createElement('td');
+
+                // Delete button
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.classList.add('btn', 'btn-danger');
+                deleteButton.onclick = function () {
+                    deleteAttendance(attendance.id, row);
+                };
 
                 if(attendance.Name != "" && attendance.Time != ""){
                     cell1.textContent = index + 1;
                     cell2.textContent = attendance.Name;
                     cell3.textContent = attendance.Time;
+                    cell4.appendChild(deleteButton);
 
                     row.appendChild(cell1);
                     row.appendChild(cell2);
                     row.appendChild(cell3);
+                    row.appendChild(cell4);
+
                     tableBody.appendChild(row);
                 }
+
+                // Make deleteAttendance function globally accessible
+                window.deleteAttendance = async function(attendanceId, row) {
+                    try {
+                        const attendanceRef = doc(db, "attendance", attendanceId);
+                        await deleteDoc(attendanceRef);
+                        row.remove(); // Remove the row from the table after deletion
+                        console.log("Attendance deleted successfully");
+                    } catch (error) {
+                        console.error("Error deleting student: ", error);
+                    }
+                };
+
                 
             });
         }
