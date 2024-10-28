@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Assigned Subjects</title>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAFLeG3xlGCH9Ci7j8q6GBA1jDVyb3zSM4",
+            authDomain: "utmsmartscan.firebaseapp.com",
+            projectId: "utmsmartscan",
+            storageBucket: "utmsmartscan.appspot.com",
+            messagingSenderId: "150286309478",
+            appId: "1:150286309478:web:4ec07841589ecfc34975a7"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = 'index.html';
+            } else {
+                displayAssignedSubjects(user.uid);
+            }
+        });
+
+        // Display assigned subjects
+        async function displayAssignedSubjects(userId) {
+            try {
+                const userRef = doc(db, "users", userId);
+                const userDoc = await getDoc(userRef);
+
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    const subjectIds = userData.subjects || [];
+
+                    const tableBody = document.getElementById("subjectTableBody");
+
+                    for (const subjectId of subjectIds) {
+                        const subjectRef = doc(db, "subject", subjectId);
+                        const subjectDoc = await getDoc(subjectRef);
+
+                        if (subjectDoc.exists()) {
+                            const subjectData = subjectDoc.data();
+                            const row = document.createElement("tr");
+                            const codeCell = document.createElement("td");
+                            const nameCell = document.createElement("td");
+
+                            codeCell.textContent = subjectData.subject_code;
+                            nameCell.textContent = subjectData.subject_name;
+
+                            row.appendChild(codeCell);
+                            row.appendChild(nameCell);
+                            tableBody.appendChild(row);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching assigned subjects: ", error);
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Your Assigned Subjects</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Subject Code</th>
+                <th>Subject Name</th>
+            </tr>
+        </thead>
+        <tbody id="subjectTableBody">
+            <!-- Subject rows will be added here dynamically -->
+        </tbody>
+    </table>
+</body>
+</html>
