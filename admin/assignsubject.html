@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assign Subject to Student</title>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAFLeG3xlGCH9Ci7j8q6GBA1jDVyb3zSM4",
+            authDomain: "utmsmartscan.firebaseapp.com",
+            projectId: "utmsmartscan",
+            storageBucket: "utmsmartscan.appspot.com",
+            messagingSenderId: "150286309478",
+            appId: "1:150286309478:web:4ec07841589ecfc34975a7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+            }
+        });
+
+        // Fetch students
+        async function fetchStudents() {
+        const studentsCollection = collection(db, "users");
+        const studentsSnapshot = await getDocs(studentsCollection);
+        const students = studentsSnapshot.docs
+            .filter(doc => doc.data().roles === "student")
+            .map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        const studentSelect = document.getElementById("studentSelect");
+        students.forEach(student => {
+            const option = document.createElement("option");
+            option.value = student.id;
+            option.textContent = student.Name || "Unnamed Student"; // Fallback for missing name
+            studentSelect.appendChild(option);
+        });
+    }
+
+        // Fetch subjects
+        async function fetchSubjects() {
+            const subjectsCollection = collection(db, "subject");
+            const subjectsSnapshot = await getDocs(subjectsCollection);
+            const subjects = subjectsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            const subjectSelect = document.getElementById("subjectSelect");
+            subjects.forEach(subject => {
+                const option = document.createElement("option");
+                option.value = subject.id;
+                option.textContent = subject.subject_name;
+                subjectSelect.appendChild(option);
+            });
+        }
+
+        // Assign subject to student
+        window.assignSubject = async function () {
+        const studentId = document.getElementById("studentSelect").value;
+        const subjectId = document.getElementById("subjectSelect").value;
+
+        if (studentId && subjectId) {
+            const studentRef = doc(db, "users", studentId);
+            await updateDoc(studentRef, {
+                subjects: arrayUnion(subjectId)  // Adding subject ID to student’s `subjects` array
+            });
+            alert("Subject assigned successfully!");
+        } else {
+            alert("Please select both a student and a subject.");
+        }
+    };
+
+        window.onload = function () {
+            fetchStudents();
+            fetchSubjects();
+        };
+    </script>
+</head>
+<body>
+    <h1>Assign Subject to Student</h1>
+    <label for="studentSelect">Select Student:</label>
+    <select id="studentSelect">
+        <option value="">--Select Student--</option>
+    </select>
+
+    <label for="subjectSelect">Select Subject:</label>
+    <select id="subjectSelect">
+        <option value="">--Select Subject--</option>
+    </select>
+
+    <button onclick="assignSubject()">Assign Subject</button>
+</body>
+</html>
