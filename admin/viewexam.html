@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam List</title>
+    <link href="css/styles.css" rel="stylesheet" />
+    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+
+    <script type="module">
+        // Firebase SDK imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAFLeG3xlGCH9Ci7j8q6GBA1jDVyb3zSM4",
+            authDomain: "utmsmartscan.firebaseapp.com",
+            projectId: "utmsmartscan",
+            storageBucket: "utmsmartscan.appspot.com",
+            messagingSenderId: "150286309478",
+            appId: "1:150286309478:web:4ec07841589ecfc34975a7"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Redirect to login if not authenticated
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+            }
+        });
+
+        // Fetch exams with subject names
+        async function fetchExams() {
+            try {
+                const examCollection = collection(db, "exam");
+                const examSnapshot = await getDocs(examCollection);
+                const examList = await Promise.all(
+                    examSnapshot.docs.map(async (examDoc) => {
+                        const examData = examDoc.data();
+                        const subjectCollection = collection(db, "exam", examDoc.id, "subject"); // Access the subject subcollection
+                        const subjectSnapshot = await getDocs(subjectCollection);
+
+                        const subjects = await Promise.all(
+                            subjectSnapshot.docs.map(async (subjectDoc) => {
+                                const subjectId = subjectDoc.id; // The ID of the subject
+                                const subjectRef = doc(db, "subject", subjectId);
+                                const subjectSnap = await getDoc(subjectRef);
+                                const subjectName = subjectSnap.exists() ? subjectSnap.data().subject_name : "Unknown Subject";
+                                return { id: subjectId, name: subjectName }; // Return both ID and name
+                            })
+                        );
+
+                        return { id: examDoc.id, date: examData.date, subjects }; // Include the subjects array
+                    })
+                );
+                populateExamTable(examList);
+            } catch (error) {
+                console.error("Error fetching exams: ", error);
+            }
+        }
+
+        // Populate exam table
+        function populateExamTable(examList) {
+            const tableBody = document.getElementById('examTableBody');
+            tableBody.innerHTML = "";  // Clear previous entries if any
+            examList.forEach((exam, index) => {
+                const row = document.createElement('tr');
+                const cell1 = document.createElement('td');
+                const cell2 = document.createElement('td');
+                const cell3 = document.createElement('td');
+
+                cell1.textContent = index + 1;
+                cell2.textContent = exam.date;
+
+                // Check if subjects exist
+                if (exam.subjects.length > 0) {
+                    // Clear previous content in cell3
+                    cell3.innerHTML = '';
+
+                    // Create a click event for each subject
+                    exam.subjects.forEach((subject, subjectIndex) => {
+                        const subjectSpan = document.createElement('span');
+                        subjectSpan.textContent = subject.name;
+                        subjectSpan.classList.add('clickable');
+                        subjectSpan.onclick = () => {
+                            console.log("Subject clicked:", subject.name); // Log the subject name to the console
+                            openStudentModal(subject.id); // Pass only the current subject ID
+                        };
+                        cell3.appendChild(subjectSpan);
+
+                        // Add a separator for better readability (except for the last subject)
+                        if (subjectIndex < exam.subjects.length - 1) {
+                            cell3.appendChild(document.createTextNode(', ')); // Add comma between subjects
+                        }
+                    });
+                } else {
+                    cell3.textContent = "No Subject Assigned";
+                }
+
+                row.appendChild(cell1);
+                row.appendChild(cell2);
+                row.appendChild(cell3);
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Open modal with student list for a subject
+        async function openStudentModal(subjectId) {
+            try {
+                const studentList = [];
+                const examCollection = collection(db, "exam");
+                const examSnapshot = await getDocs(examCollection);
+                
+                let foundSubject = false;
+
+                for (const examDoc of examSnapshot.docs) {
+                    const examData = examDoc.data();
+                    const subjectCollection = collection(db, "exam", examDoc.id, "subject");
+                    const subjectSnapshot = await getDocs(subjectCollection);
+
+                    const selectedSubject = subjectSnapshot.docs.find(subjectDoc => subjectDoc.id === subjectId);
+
+                    if (selectedSubject) {
+                        foundSubject = true;
+                        const subjectData = selectedSubject.data();
+                        const students = subjectData.students || []; 
+
+                        // Fetch additional student details
+                        for (const student of students) {
+                            const studentDetailsRef = doc(db, "users", student.id, "Student_detail", "Details");
+                            const studentDetailsSnap = await getDoc(studentDetailsRef);
+                            const studentDetails = studentDetailsSnap.exists() ? studentDetailsSnap.data() : {};
+
+                            studentList.push({
+                                id: student.id,
+                                name: student.name,
+                                attendance: student.attendance,
+                                section: studentDetails.Section || "N/A" // Get the section, default to "N/A" if not found
+                            });
+                        }
+                        break; // Break the loop once the subject is found
+                    }
+                }
+
+                if (!foundSubject) {
+                    console.log("Subject not found in any exam");
+                }
+
+                populateStudentModal(studentList);
+            } catch (error) {
+                console.error("Error fetching students for subject: ", error);
+            }
+        }
+
+        // Populate modal with student ID and name information, including attendance
+        function populateStudentModal(studentList) {
+            const modalBody = document.getElementById('studentModalBody');
+            modalBody.innerHTML = ""; // Clear previous entries
+
+            studentList.forEach((studentInfo) => {
+                const row = document.createElement('tr');
+                const cell1 = document.createElement('td');
+                const cell2 = document.createElement('td');
+                const cell3 = document.createElement('td'); // New cell for the edit button
+                const cell4 = document.createElement('td'); // New cell for section
+
+                cell1.textContent = studentInfo.name; // Display Student Name
+                cell2.textContent = studentInfo.attendance; // Display Attendance Status as a string
+                cell4.textContent = studentInfo.section; // Display Section
+
+                // Create edit button
+                const editButton = document.createElement('button');
+                editButton.textContent = "Edit Attendance";
+                editButton.classList.add('btn', 'btn-primary');
+                editButton.onclick = () => {
+                    showEditAttendanceModal(studentInfo.id, studentInfo.attendance);
+                };
+
+                cell3.appendChild(editButton); // Add button to the cell
+                row.appendChild(cell1);
+                row.appendChild(cell4); // Add section cell
+                row.appendChild(cell2);
+                row.appendChild(cell3);
+
+                modalBody.appendChild(row);
+            });
+
+            // Show the modal
+            const studentModal = new bootstrap.Modal(document.getElementById('studentModal'));
+            studentModal.show();
+        }
+
+
+        // Show modal to edit attendance
+        function showEditAttendanceModal(studentId, currentAttendance) {
+            // Set the current attendance in the input field
+            document.getElementById('attendanceInput').value = currentAttendance;
+            document.getElementById('editStudentId').value = studentId; // Store student ID in a hidden field
+
+            // Show the modal
+            const editModal = new bootstrap.Modal(document.getElementById('editAttendanceModal'));
+            editModal.show();
+        }
+
+        // Update attendance in Firestore
+        window.updateAttendance = async function() {
+            const studentId = document.getElementById('editStudentId').value; // Get student ID
+            const newAttendance = document.getElementById('attendanceInput').value; // Get new attendance value
+
+            try {
+                // Update the student's attendance in Firestore
+                const subjectCollection = collection(db, "exam"); // Specify the correct path to your subject collection
+                const subjectSnapshot = await getDocs(subjectCollection);
+
+                for (const examDoc of subjectSnapshot.docs) {
+                    const subjectCollectionRef = collection(db, "exam", examDoc.id, "subject");
+                    const subjectSnapshot = await getDocs(subjectCollectionRef);
+
+                    const selectedSubject = subjectSnapshot.docs.find(subjectDoc => subjectDoc.data().students.some(student => student.id === studentId));
+
+                    if (selectedSubject) {
+                        const studentIndex = selectedSubject.data().students.findIndex(student => student.id === studentId);
+                        if (studentIndex !== -1) {
+                            const updatedStudents = selectedSubject.data().students;
+                            updatedStudents[studentIndex].attendance = newAttendance; // Update attendance
+
+                            // Update the Firestore document
+                            await updateDoc(doc(subjectCollectionRef, selectedSubject.id), {
+                                students: updatedStudents
+                            });
+
+                            alert("Attendance updated successfully!");
+
+                            // Close the edit attendance modal
+                            const editModal = bootstrap.Modal.getInstance(document.getElementById('editAttendanceModal'));
+                            editModal.hide(); // Close the modal
+                            break; // Break after updating
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Error updating attendance: ", error);
+                alert("Failed to update attendance.");
+            }
+        }
+
+        // Initialize data fetching on page load
+        window.onload = function () {
+            fetchExams();
+        };
+    </script>
+
+</head>
+
+<body class="sb-nav-fixed">
+    <div class="background"></div>
+
+    <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
+        <a class="navbar-brand ps-3" href="index.html">
+            <img src="utm_logo.png" alt="UTM Logo" style="height: 40px; margin-right: 10px;" />
+            <img src="utmsslogo.png" alt="UTM SmartScan Logo" style="height: 40px;" />
+        </a>
+        <ul class="navbar-nav ms-auto">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-user fa-fw"></i></a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                    <li><a class="dropdown-item" href="#">Settings</a></li>
+                    <li><a class="dropdown-item" href="#">Activity Log</a></li>
+                    <li><a class="dropdown-item" href="#">Logout</a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+
+    <div id="layoutSidenav">
+        <div id="layoutSidenav_content">
+            <main>
+                <div class="container-fluid">
+                    <h1 class="mt-4">Exam List</h1>
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <table class="table table-bordered" id="examTable" width="100%" cellspacing="0">
+                                <thead>
+                                    <tr>
+                                        <th>No</th>
+                                        <th>Date</th>
+                                        <th>Subjects</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="examTableBody">
+                                    <!-- Exam data will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Student Modal -->
+    <div class="modal fade" id="studentModal" tabindex="-1" aria-labelledby="studentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="studentModalLabel">Students Enrolled</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-bordered">
+                        <!-- Inside populateStudentModal function -->
+                        <thead>
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Section</th> <!-- New Section Column -->
+                                <th>Attendance Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>                        
+                        <tbody id="studentModalBody">
+                            <!-- Student entries will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Attendance Modal -->
+    <div class="modal fade" id="editAttendanceModal" tabindex="-1" aria-labelledby="editAttendanceModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editAttendanceModalLabel">Edit Attendance</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editStudentId">
+                    <label for="attendanceInput">Attendance Status:</label>
+                    <input type="text" id="attendanceInput" class="form-control">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="updateAttendance()">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.slim.min.js"></script>
+    <script src="js/scripts.js"></script>
+</body>
+</html>

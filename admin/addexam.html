@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Exam</title>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, setDoc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAFLeG3xlGCH9Ci7j8q6GBA1jDVyb3zSM4",
+            authDomain: "utmsmartscan.firebaseapp.com",
+            projectId: "utmsmartscan",
+            storageBucket: "utmsmartscan.appspot.com",
+            messagingSenderId: "150286309478",
+            appId: "1:150286309478:web:4ec07841589ecfc34975a7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+            }
+        });
+
+        // Fetch subjects and display as checkboxes
+        async function fetchSubjects() {
+            const subjectsCollection = collection(db, "subject");
+            const subjectsSnapshot = await getDocs(subjectsCollection);
+            const subjects = subjectsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            const subjectContainer = document.getElementById("subjectContainer");
+            subjects.forEach(subject => {
+                const label = document.createElement("label");
+                const checkbox = document.createElement("input");
+
+                checkbox.type = "checkbox";
+                checkbox.value = subject.id;
+                checkbox.name = "subject";
+                
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(subject.subject_name));
+                subjectContainer.appendChild(label);
+                subjectContainer.appendChild(document.createElement("br"));
+            });
+        }
+
+        // Fetch students for each selected subject
+        async function fetchStudentsForSubject(subjectId) {
+            const studentsCollection = collection(db, "users");
+            const q = query(studentsCollection, where("subjects", "array-contains", subjectId));
+            const studentsSnapshot = await getDocs(q);
+            return studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        }
+
+        // Create Exam Document
+        window.createExam = async function () {
+            const date = document.getElementById("examDate").value;
+            const selectedSubjects = Array.from(document.querySelectorAll('input[name="subject"]:checked')).map(checkbox => checkbox.value);
+
+            if (!date || selectedSubjects.length === 0) {
+                alert("Please select both a date and at least one subject.");
+                return;
+            }
+
+            try {
+                // Create the main exam document with date
+                const examDocRef = await addDoc(collection(db, "exam"), { date });
+
+                // Loop through selected subjects to create subcollection
+                for (const subjectId of selectedSubjects) {
+                    const subjectDocRef = doc(db, "exam", examDocRef.id, "subject", subjectId);
+                    const subjectData = await getDoc(doc(db, "subject", subjectId));
+
+                    if (subjectData.exists()) {
+                        const subjectName = subjectData.data().subject_name;
+
+                        // Fetch students enrolled in the subject
+                        const enrolledStudents = await fetchStudentsForSubject(subjectId);
+                        const studentList = enrolledStudents.map(student => ({
+                            id: student.id,
+                            name: student.Name, // Assuming `Name` is the field for student name
+                            attendance: "No" // Set attendance default to "No"
+                        }));
+
+                        // Create subject document in the subcollection with subject name and student list
+                        await setDoc(subjectDocRef, {
+                            subject_name: subjectName,
+                            students: studentList
+                        });
+                    }
+                }
+
+                alert("Exam created successfully with subjects and enrolled students!");
+            } catch (error) {
+                console.error("Error creating exam:", error);
+                alert("Failed to create exam. Please try again.");
+            }
+        };
+
+        window.onload = fetchSubjects;
+    </script>
+</head>
+<body>
+    <h1>Create Exam</h1>
+    <label for="examDate">Exam Date:</label>
+    <input type="date" id="examDate" required>
+
+    <label>Select Subjects:</label>
+    <div id="subjectContainer">
+        <!-- Subject checkboxes will be added here dynamically -->
+    </div>
+
+    <button onclick="createExam()">Create Exam</button>
+</body>
+</html>
