@@ -8,6 +8,19 @@
     <link href="css/styles.css" rel="stylesheet" />
     <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
 
+    <style>
+        .clickable {
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s; /* Smooth transition */
+        }
+
+        .clickable:hover {
+            background-color: #f0f0f0; /* Light gray background on hover */
+            color: #007bff; /* Change text color on hover */
+            border-radius: 4px; /* Optional: round the corners */
+        }
+    </style>
+
     <script type="module">
         // Firebase SDK imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
@@ -90,8 +103,8 @@
                         subjectSpan.textContent = subject.name;
                         subjectSpan.classList.add('clickable');
                         subjectSpan.onclick = () => {
-                            console.log("Subject clicked:", subject.name); // Log the subject name to the console
-                            openStudentModal(subject.id); // Pass only the current subject ID
+                            console.log("Subject clicked:", subject.name);
+                            openStudentModal(exam.id, subject.id); // Pass both exam ID and subject ID
                         };
                         cell3.appendChild(subjectSpan);
 
@@ -112,45 +125,33 @@
         }
 
         // Open modal with student list for a subject
-        async function openStudentModal(subjectId) {
+        async function openStudentModal(examId, subjectId) {
             try {
                 const studentList = [];
-                const examCollection = collection(db, "exam");
-                const examSnapshot = await getDocs(examCollection);
-                
-                let foundSubject = false;
+                const subjectCollection = collection(db, "exam", examId, "subject"); // Access the subject subcollection for the specific exam
+                const subjectSnapshot = await getDocs(subjectCollection);
 
-                for (const examDoc of examSnapshot.docs) {
-                    const examData = examDoc.data();
-                    const subjectCollection = collection(db, "exam", examDoc.id, "subject");
-                    const subjectSnapshot = await getDocs(subjectCollection);
+                const selectedSubject = subjectSnapshot.docs.find(subjectDoc => subjectDoc.id === subjectId);
 
-                    const selectedSubject = subjectSnapshot.docs.find(subjectDoc => subjectDoc.id === subjectId);
+                if (selectedSubject) {
+                    const subjectData = selectedSubject.data();
+                    const students = subjectData.students || []; 
 
-                    if (selectedSubject) {
-                        foundSubject = true;
-                        const subjectData = selectedSubject.data();
-                        const students = subjectData.students || []; 
+                    // Fetch additional student details
+                    for (const student of students) {
+                        const studentDetailsRef = doc(db, "users", student.id, "Student_detail", "Details");
+                        const studentDetailsSnap = await getDoc(studentDetailsRef);
+                        const studentDetails = studentDetailsSnap.exists() ? studentDetailsSnap.data() : {};
 
-                        // Fetch additional student details
-                        for (const student of students) {
-                            const studentDetailsRef = doc(db, "users", student.id, "Student_detail", "Details");
-                            const studentDetailsSnap = await getDoc(studentDetailsRef);
-                            const studentDetails = studentDetailsSnap.exists() ? studentDetailsSnap.data() : {};
-
-                            studentList.push({
-                                id: student.id,
-                                name: student.name,
-                                attendance: student.attendance,
-                                section: studentDetails.Section || "N/A" // Get the section, default to "N/A" if not found
-                            });
-                        }
-                        break; // Break the loop once the subject is found
+                        studentList.push({
+                            id: student.id,
+                            name: student.name,
+                            attendance: student.attendance,
+                            section: studentDetails.Section || "N/A" // Get the section, default to "N/A" if not found
+                        });
                     }
-                }
-
-                if (!foundSubject) {
-                    console.log("Subject not found in any exam");
+                } else {
+                    console.log("Subject not found in this exam");
                 }
 
                 populateStudentModal(studentList);
@@ -158,6 +159,7 @@
                 console.error("Error fetching students for subject: ", error);
             }
         }
+
 
         // Populate modal with student ID and name information, including attendance
         function populateStudentModal(studentList) {
