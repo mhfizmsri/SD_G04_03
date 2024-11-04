@@ -11,7 +11,7 @@
         // Firebase SDK imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, getDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
         // Firebase configuration
         const firebaseConfig = {
@@ -34,70 +34,118 @@
             }
         });
 
-        // Fetch subjects from Firestore
         async function fetchAttendance() {
             try {
-                const attendanceCollection = collection(db, "attendance");
-                const attendanceSnapshot = await getDocs(attendanceCollection);
-                const attendanceList = attendanceSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-                populateAttendanceTable(attendanceList);
+                const examCollection = collection(db, "exam");
+                const examSnapshot = await getDocs(examCollection);
+        
+                for (const examDoc of examSnapshot.docs) {
+                    const examData = examDoc.data();
+                    const examId = examDoc.id;
+                    const subjectsCollection = collection(db, "exam", examId, "subject");
+                    const subjectsSnapshot = await getDocs(subjectsCollection);
+        
+                    // Create an exam section
+                    const examSection = document.createElement('div');
+                    const examHeader = document.createElement('h3');
+                    examHeader.textContent = `Exam Date: ${examData.date} (${examData.Day})`;
+                    examHeader.style.fontWeight = 'bold'; // Make the date bold
+                    examSection.appendChild(examHeader);
+        
+                    // Create a div to hold the subjects, initially hidden
+                    const subjectsContainer = document.createElement('div');
+                    subjectsContainer.style.display = 'none'; // Hide by default
+        
+                    // Add a click event to toggle the visibility
+                    examHeader.style.cursor = 'pointer';
+                    examHeader.onclick = () => {
+                        subjectsContainer.style.display = subjectsContainer.style.display === 'none' ? 'block' : 'none';
+                    };
+        
+                    for (const subjectDoc of subjectsSnapshot.docs) {
+                        const subjectData = subjectDoc.data();
+                        const subjectHeader = document.createElement('h4');
+                        subjectHeader.textContent = `Subject: ${subjectData.subject_name}`;
+                        subjectsContainer.appendChild(subjectHeader);
+        
+                        const table = document.createElement('table');
+                        table.classList.add('table', 'table-bordered');
+                        const tableHead = document.createElement('thead');
+                        const headerRow = document.createElement('tr');
+        
+                        // Added 'Attendance' to the headers
+                        ['#', 'Student Name', 'Time', 'Attendance', 'No_Matric', 'Year', 'Section'].forEach(headerText => {
+                            const th = document.createElement('th');
+                            th.textContent = headerText;
+                            headerRow.appendChild(th);
+                        });
+        
+                        tableHead.appendChild(headerRow);
+                        table.appendChild(tableHead);
+        
+                        const tableBody = document.createElement('tbody');
+        
+                        for (const [index, student] of subjectData.students.entries()) {
+                            const userId = student.id;
+                            const studentDocRef = doc(db, "users", userId, "Student_detail", "Details");
+                            const studentDoc = await getDoc(studentDocRef);
+        
+                            if (studentDoc.exists()) {
+                                const studentDetails = studentDoc.data();
+        
+                                const row = document.createElement('tr');
+                                const cell1 = document.createElement('td');
+                                const cell2 = document.createElement('td');
+                                const cell3 = document.createElement('td');
+                                const cell4 = document.createElement('td');
+                                const cell5 = document.createElement('td');
+                                const cell6 = document.createElement('td');
+                                const cell7 = document.createElement('td');
+        
+                                cell1.textContent = index + 1;
+                                cell2.textContent = student.name;
+                                cell3.textContent = student.time || "No Time Recorded";
+                                cell4.textContent = student.attendance || "No"; // Added attendance status
+                                cell5.textContent = studentDetails.No_Matric || "N/A";
+                                cell6.textContent = studentDetails.Year || "N/A";
+                                cell7.textContent = studentDetails.Section || "N/A";
+        
+                                row.appendChild(cell1);
+                                row.appendChild(cell2);
+                                row.appendChild(cell3);
+                                row.appendChild(cell4);
+                                row.appendChild(cell5);
+                                row.appendChild(cell6);
+                                row.appendChild(cell7);
+        
+                                tableBody.appendChild(row);
+                            }
+                        }
+        
+                        table.appendChild(tableBody);
+                        subjectsContainer.appendChild(table);
+                    }
+        
+                    // Append the subjects container to the exam section
+                    examSection.appendChild(subjectsContainer);
+        
+                    // Add a line divider between each exam date
+                    const divider = document.createElement('hr');
+                    examSection.appendChild(divider);
+        
+                    document.querySelector('.container-fluid').appendChild(examSection);
+                }
             } catch (error) {
                 console.error("Error fetching attendance: ", error);
             }
         }
-
-        // Populate table with attendance
-        function populateAttendanceTable(attendanceList) {
-            const tableBody = document.getElementById('attendanceTableBody');
-            attendanceList.forEach((attendance, index) => {
-                const row = document.createElement('tr');
-                const cell1 = document.createElement('td');
-                const cell2 = document.createElement('td');
-                const cell3 = document.createElement('td');
-                const cell4 = document.createElement('td');
-
-                // Delete button
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = 'Delete';
-                deleteButton.classList.add('btn', 'btn-danger');
-                deleteButton.onclick = function () {
-                    deleteAttendance(attendance.id, row);
-                };
-
-                if(attendance.Name != "" && attendance.Time != ""){
-                    cell1.textContent = index + 1;
-                    cell2.textContent = attendance.Name;
-                    cell3.textContent = attendance.Time;
-                    cell4.appendChild(deleteButton);
-
-                    row.appendChild(cell1);
-                    row.appendChild(cell2);
-                    row.appendChild(cell3);
-                    row.appendChild(cell4);
-
-                    tableBody.appendChild(row);
-                }
-
-                // Make deleteAttendance function globally accessible
-                window.deleteAttendance = async function(attendanceId, row) {
-                    try {
-                        const attendanceRef = doc(db, "attendance", attendanceId);
-                        await deleteDoc(attendanceRef);
-                        row.remove(); // Remove the row from the table after deletion
-                        console.log("Attendance deleted successfully");
-                    } catch (error) {
-                        console.error("Error deleting student: ", error);
-                    }
-                };
-
-                
-            });
-        }
-
+        
         window.onload = function () {
             fetchAttendance();
         };
+        
+        
+        
     </script>
 </head>
 <body class="sb-nav-fixed">
@@ -181,15 +229,9 @@
             <main>
                 <div class="container-fluid px-4">
                     <h2 class="mt-4">Attendance List</h2>
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <table class="table table-bordered">
+                    
                                 <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Student Name</th>
-                                        <th>Time</th>
-                                    </tr>
+                                   
                                 </thead>
                                 <tbody id="attendanceTableBody">
                                     <!-- Rows will be dynamically inserted -->

@@ -50,34 +50,37 @@
         });
 
         // Fetch exams with subject names
-        async function fetchExams() {
-            try {
-                const examCollection = collection(db, "exam");
-                const examSnapshot = await getDocs(examCollection);
-                const examList = await Promise.all(
-                    examSnapshot.docs.map(async (examDoc) => {
-                        const examData = examDoc.data();
-                        const subjectCollection = collection(db, "exam", examDoc.id, "subject"); // Access the subject subcollection
-                        const subjectSnapshot = await getDocs(subjectCollection);
+        // Fetch exams with subject names and StartScan value
+async function fetchExams() {
+    try {
+        const examCollection = collection(db, "exam");
+        const examSnapshot = await getDocs(examCollection);
+        const examList = await Promise.all(
+            examSnapshot.docs.map(async (examDoc) => {
+                const examData = examDoc.data();
+                const subjectCollection = collection(db, "exam", examDoc.id, "subject"); // Access the subject subcollection
+                const subjectSnapshot = await getDocs(subjectCollection);
 
-                        const subjects = await Promise.all(
-                            subjectSnapshot.docs.map(async (subjectDoc) => {
-                                const subjectId = subjectDoc.id; // The ID of the subject
-                                const subjectRef = doc(db, "subject", subjectId);
-                                const subjectSnap = await getDoc(subjectRef);
-                                const subjectName = subjectSnap.exists() ? subjectSnap.data().subject_name : "Unknown Subject";
-                                return { id: subjectId, name: subjectName }; // Return both ID and name
-                            })
-                        );
-
-                        return { id: examDoc.id, date: examData.date, subjects }; // Include the subjects array
+                const subjects = await Promise.all(
+                    subjectSnapshot.docs.map(async (subjectDoc) => {
+                        const subjectId = subjectDoc.id; // The ID of the subject
+                        const subjectRef = doc(db, "subject", subjectId);
+                        const subjectSnap = await getDoc(subjectRef);
+                        const subjectName = subjectSnap.exists() ? subjectSnap.data().subject_name : "Unknown Subject";
+                        return { id: subjectId, name: subjectName }; // Return both ID and name
                     })
                 );
-                populateExamTable(examList);
-            } catch (error) {
-                console.error("Error fetching exams: ", error);
-            }
-        }
+
+                // Include the StartScan value from Firestore
+                return { id: examDoc.id, date: examData.date, subjects, StartScan: examData.StartScan || "No" }; // Default to "No" if StartScan is not set
+            })
+        );
+        populateExamTable(examList);
+    } catch (error) {
+        console.error("Error fetching exams: ", error);
+    }
+}
+
 
         // Populate exam table
         // Populate exam table
