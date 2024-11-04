@@ -56,7 +56,7 @@
                 const examSnapshot = await getDocs(examCollection);
                 const examList = await Promise.all(
                     examSnapshot.docs.map(async (examDoc) => {
-                        const examData = examDoc.data();
+                        const examData = examDoc.data();s
                         const subjectCollection = collection(db, "exam", examDoc.id, "subject"); // Access the subject subcollection
                         const subjectSnapshot = await getDocs(subjectCollection);
 
@@ -170,22 +170,32 @@
                 const row = document.createElement('tr');
                 const cell1 = document.createElement('td');
                 const cell2 = document.createElement('td');
-                const cell3 = document.createElement('td'); // New cell for the edit button
+                const cell3 = document.createElement('td'); // New cell for the edit buttons
                 const cell4 = document.createElement('td'); // New cell for section
 
                 cell1.textContent = studentInfo.name; // Display Student Name
                 cell2.textContent = studentInfo.attendance; // Display Attendance Status as a string
                 cell4.textContent = studentInfo.section; // Display Section
 
-                // Create edit button
-                const editButton = document.createElement('button');
-                editButton.textContent = "Edit Attendance";
-                editButton.classList.add('btn', 'btn-primary');
-                editButton.onclick = () => {
-                    showEditAttendanceModal(studentInfo.id, studentInfo.attendance);
+                // Create "Yes" button
+                const yesButton = document.createElement('button');
+                yesButton.textContent = "Yes";
+                yesButton.style.marginRight = "10px";
+                yesButton.classList.add('btn', 'btn-primary');
+                yesButton.onclick = () => {
+                    updateAttendance(studentInfo.id, "Yes"); // Update attendance to "Yes" when clicked
                 };
 
-                cell3.appendChild(editButton); // Add button to the cell
+                // Create "No" button (if you need it)
+                const noButton = document.createElement('button');
+                noButton.textContent = "No";
+                noButton.classList.add('btn', 'btn-danger');
+                noButton.onclick = () => {
+                    updateAttendance(studentInfo.id, "No"); // Update attendance to "No" if needed
+                };
+
+                cell3.appendChild(yesButton); // Add "Yes" button to the cell
+                cell3.appendChild(noButton); // Add "No" button to the cell
                 row.appendChild(cell1);
                 row.appendChild(cell4); // Add section cell
                 row.appendChild(cell2);
@@ -199,39 +209,26 @@
             studentModal.show();
         }
 
-
-        // Show modal to edit attendance
-        function showEditAttendanceModal(studentId, currentAttendance) {
-            // Set the current attendance in the input field
-            document.getElementById('attendanceInput').value = currentAttendance;
-            document.getElementById('editStudentId').value = studentId; // Store student ID in a hidden field
-
-            // Show the modal
-            const editModal = new bootstrap.Modal(document.getElementById('editAttendanceModal'));
-            editModal.show();
-        }
-
         // Update attendance in Firestore
-        window.updateAttendance = async function() {
-            const studentId = document.getElementById('editStudentId').value; // Get student ID
-            const newAttendance = document.getElementById('attendanceInput').value; // Get new attendance value
-
+        async function updateAttendance(studentId, newAttendance) {
             try {
-                // Update the student's attendance in Firestore
-                const subjectCollection = collection(db, "exam"); // Specify the correct path to your subject collection
+                // Specify the correct path to your exam collection
+                const subjectCollection = collection(db, "exam");
                 const subjectSnapshot = await getDocs(subjectCollection);
 
                 for (const examDoc of subjectSnapshot.docs) {
                     const subjectCollectionRef = collection(db, "exam", examDoc.id, "subject");
                     const subjectSnapshot = await getDocs(subjectCollectionRef);
 
-                    const selectedSubject = subjectSnapshot.docs.find(subjectDoc => subjectDoc.data().students.some(student => student.id === studentId));
+                    const selectedSubject = subjectSnapshot.docs.find(subjectDoc =>
+                        subjectDoc.data().students.some(student => student.id === studentId)
+                    );
 
                     if (selectedSubject) {
                         const studentIndex = selectedSubject.data().students.findIndex(student => student.id === studentId);
                         if (studentIndex !== -1) {
                             const updatedStudents = selectedSubject.data().students;
-                            updatedStudents[studentIndex].attendance = newAttendance; // Update attendance
+                            updatedStudents[studentIndex].attendance = newAttendance; // Update attendance to "Yes"
 
                             // Update the Firestore document
                             await updateDoc(doc(subjectCollectionRef, selectedSubject.id), {
@@ -240,10 +237,10 @@
 
                             alert("Attendance updated successfully!");
 
-                            // Close the edit attendance modal
-                            const editModal = bootstrap.Modal.getInstance(document.getElementById('editAttendanceModal'));
-                            editModal.hide(); // Close the modal
-                            break; // Break after updating
+                            // Close the student modal
+                            const studentModal = bootstrap.Modal.getInstance(document.getElementById('studentModal'));
+                            studentModal.hide(); // Close the modal
+                            break; // Stop after updating
                         }
                     }
                 }
@@ -337,28 +334,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Edit Attendance Modal -->
-    <div class="modal fade" id="editAttendanceModal" tabindex="-1" aria-labelledby="editAttendanceModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editAttendanceModalLabel">Edit Attendance</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="editStudentId">
-                    <label for="attendanceInput">Attendance Status:</label>
-                    <input type="text" id="attendanceInput" class="form-control">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" onclick="updateAttendance()">Save changes</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js" crossorigin="anonymous"></script>
