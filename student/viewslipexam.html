@@ -11,27 +11,20 @@
     <link href="css/styles.css" rel="stylesheet" />
 
     <style>
-        /* Styles remain unchanged */
         body {
             font-family: 'Roboto', sans-serif;
-            background-color: #f8f9fa;
+            background-color: #f4f4f9;
             color: #333;
             margin: 0;
             padding: 0;
         }
 
-        header {
-            background-color: #FF7043;
-            padding: 20px 0;
-            text-align: center;
-            color: white;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
         header h1 {
-            margin: 0;
+            color: #FF7043;
+            text-align: center;
             font-size: 2rem;
             font-weight: 700;
+            padding: 20px;
         }
 
         .container {
@@ -61,10 +54,6 @@
         h2 {
             font-weight: 700;
             color: #5f0808;
-            margin-bottom: 20px;
-        }
-
-        .form-group {
             margin-bottom: 20px;
         }
 
@@ -105,14 +94,12 @@
         }
     </style>
 
-    <!-- Firebase SDK (import as module) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAFLeG3xlGCH9Ci7j8q6GBA1jDVyb3zSM4",
             authDomain: "utmsmartscan.firebaseapp.com",
@@ -122,111 +109,154 @@
             appId: "1:150286309478:web:4ec07841589ecfc34975a7"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
         const storage = getStorage(app);
 
-        // Listen for auth state changes
         onAuthStateChanged(auth, (user) => {
             if (!user) {
-                // Redirect to login if not authenticated
                 window.location.href = "index.html";
             } else {
-                console.log("User logged in:", user);
                 populateExamSlipOptions(user);
             }
         });
 
-        // Function to populate the combo box with options from Firestore
         async function populateExamSlipOptions(user) {
-            try {
-                const userId = user.uid;
-                const examSlipRef = doc(db, "users", userId, "Student_detail", "ExamSlip");
-                const examSlipDoc = await getDoc(examSlipRef);
+            const userId = user.uid;
+            const examSlipRef = doc(db, "users", userId, "Student_detail", "ExamSlip");
+            const examSlipDoc = await getDoc(examSlipRef);
 
-                if (examSlipDoc.exists()) {
-                    console.log("Exam slip document data:", examSlipDoc.data());
-                    const data = examSlipDoc.data();
-                    const examSlipSelector = document.getElementById("examSlipSelector");
-                    for (const key in data) {
-                        if (data.hasOwnProperty(key)) {
-                            const option = document.createElement("option");
-                            option.value = key;
-                            option.textContent = key;
-                            examSlipSelector.appendChild(option);
-                        }
+            if (examSlipDoc.exists()) {
+                const data = examSlipDoc.data();
+                const examSlipSelector = document.getElementById("examSlipSelector");
+                for (const key in data) {
+                    if (data.hasOwnProperty(key)) {
+                        const option = document.createElement("option");
+                        option.value = key;
+                        option.textContent = key;
+                        examSlipSelector.appendChild(option);
                     }
-                } else {
-                    alert("No exam slips found in the database.");
-                    console.error("No exam slips found in Firestore.");
                 }
-            } catch (error) {
-                console.error("Error fetching exam slips:", error);
-                alert("Error fetching exam slips!");
+            } else {
+                alert("No exam slips found.");
             }
         }
 
-        // Function to fetch and open the file from Firebase Storage
         document.getElementById("viewSlipButton").addEventListener("click", async () => {
             const selectedSlip = document.getElementById("examSlipSelector").value;
-            try {
-                const user = auth.currentUser;
-                if (!user) {
-                    alert("Please log in to view the exam slip.");
-                    return;
-                }
-        
-                const userId = user.uid; // Assuming the user's ID is the unique identifier
-                const examSlipRef = doc(db, "users", userId, "Student_detail", "ExamSlip");
-                const examSlipDoc = await getDoc(examSlipRef);
-        
-                if (examSlipDoc.exists()) {
-                    const data = examSlipDoc.data();
-                    const fileName = data[selectedSlip];
-        
-                    // Debugging: Log the file name and path to check for issues
-                    console.log(`Selected Slip: ${selectedSlip}`);
-                    console.log(`File Name from Firestore: ${fileName}`);
-        
-                    if (fileName && typeof fileName === "string") {
-                        // Include the user's unique ID in the file path
-                        const fileRef = ref(storage, `exam_slips/${userId}/${fileName}`);
-                        const fileURL = await getDownloadURL(fileRef);
-                        window.open(fileURL, "_blank"); // Open the file in a new tab
-                    } else {
-                        alert("Invalid file name retrieved from Firestore.");
-                        console.error("Invalid file name:", fileName);
-                    }
-                } else {
-                    alert("Exam Slip not found or not available!");
-                    console.error("Exam Slip not found in Firestore.");
-                }
-            } catch (error) {
-                console.error("Error fetching exam slip:", error);
-                alert("Error fetching exam slip!");
+            const user = auth.currentUser;
+            if (!user) {
+                alert("Please log in to view the exam slip.");
+                return;
+            }
+
+            const userId = user.uid;
+            const examSlipRef = doc(db, "users", userId, "Student_detail", "ExamSlip");
+            const examSlipDoc = await getDoc(examSlipRef);
+
+            if (examSlipDoc.exists()) {
+                const data = examSlipDoc.data();
+                const fileName = data[selectedSlip];
+                const fileRef = ref(storage, `exam_slips/${userId}/${fileName}`);
+                const fileURL = await getDownloadURL(fileRef);
+                window.open(fileURL, "_blank");
+            } else {
+                alert("Exam Slip not available.");
             }
         });
-        
-        
     </script>
 </head>
-<body>
-    <header>
-        <h1>UTM Student Exam Slip Viewer</h1>
-    </header>
-    <div class="container">
-        <div class="card">
-            <div class="card-body">
-                <h2>View Exam Slip</h2>
-                <div class="form-group">
-                    <label for="examSlipSelector">Select Exam Slip</label>
-                    <select id="examSlipSelector" class="form-control"></select>
+<body class="sb-nav-fixed">
+    <div class="blur"></div>
+    <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
+        <a class="navbar-brand ps-3" href="home.html">
+            <img src="utm_logo.png" alt="UTM Logo" style="height: 40px; margin-right: 10px;" />
+            <img src="utmsslogo.png" alt="UTM SmartScan Logo" style="height: 40px;" />
+        </a>
+        <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" href="#!"><i class="fas fa-bars"></i></button>
+        <form class="d-none d-md-inline-block form-inline ms-auto me-0 me-md-3 my-2 my-md-0">
+        </form>
+        <ul class="navbar-nav ms-auto ms-md-0 me-3 me-lg-4">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-user fa-fw"></i></a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                    <li><a class="dropdown-item" href="profilestudent.html">Profile</a></li>
+                    <li><a class="dropdown-item" href="#!">Activity Log</a></li>
+                    <li><hr class="dropdown-divider" /></li>
+                    <li><a class="dropdown-item" href="index.html" id="logout">Logout</a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+    <div id="layoutSidenav">
+        <div id="layoutSidenav_nav">
+            <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
+                <div class="sb-sidenav-menu">
+                    <div class="nav">
+                        <div class="sb-sidenav-menu-heading">Core</div>
+                        <a class="nav-link" href="home.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
+                            Dashboard
+                        </a>
+                        <div class="sb-sidenav-menu-heading">Interface</div>
+                        <a class="nav-link" href="sendfeedback.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-comment-dots"></i></div>
+                            Send Feedback
+                        </a>
+                        <a class="nav-link" href="table.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
+                            View Table
+                        </a>
+                        <a class="nav-link" href="viewassignedsubject.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-book"></i></div>
+                            View Assigned Subject
+                        </a>
+                        
+                        <a class="nav-link" href="setfacestudent.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-user-circle"></i></div>
+                            Set Face
+                        </a>
+                        <a class="nav-link" href="viewslipexam.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-book-reader"></i></div>
+                            View Slip Exam
+                        </a>
+                        <a class="nav-link" href="viewownattendace.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-user-graduate"></i></div>
+                            View Exam Attendace
+                        </a>
+                    </div>
+  
                 </div>
-                <button id="viewSlipButton" class="btn">View Exam Slip</button>
-            </div>
+                <div class="sb-sidenav-footer">
+                    <div class="small">Logged in as:</div>
+                    <span id="studentName"></span>
+                </div>
+            </nav>
+        </div>
+
+        <div id="layoutSidenav_content">
+            <main>
+                <div class="container">
+                    <header>
+                        <h1>UTM Student Exam Slip Viewer</h1>
+                    </header>
+                    <div class="card">
+                        <div class="card-body">
+                            <h2>View Exam Slip</h2>
+                            <div class="form-group">
+                                <label for="examSlipSelector">Select Exam Slip</label>
+                                <select id="examSlipSelector" class="form-control"></select>
+                            </div>
+                            <button id="viewSlipButton" class="btn">View Exam Slip</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+

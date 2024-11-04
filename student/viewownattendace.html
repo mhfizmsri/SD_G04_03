@@ -121,12 +121,16 @@
     </style>
 </head>
 <body class="sb-nav-fixed">
+    <div class="blur"></div>
     <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
         <a class="navbar-brand ps-3" href="home.html">
             <img src="utm_logo.png" alt="UTM Logo" style="height: 40px; margin-right: 10px;" />
             <img src="utmsslogo.png" alt="UTM SmartScan Logo" style="height: 40px;" />
         </a>
-        <ul class="navbar-nav ms-auto me-3 me-lg-4">
+        <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" href="#!"><i class="fas fa-bars"></i></button>
+        <form class="d-none d-md-inline-block form-inline ms-auto me-0 me-md-3 my-2 my-md-0">
+        </form>
+        <ul class="navbar-nav ms-auto ms-md-0 me-3 me-lg-4">
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-user fa-fw"></i></a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
@@ -138,7 +142,6 @@
             </li>
         </ul>
     </nav>
-
     <div id="layoutSidenav">
         <div id="layoutSidenav_nav">
             <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
@@ -149,6 +152,7 @@
                             <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
                             Dashboard
                         </a>
+                        <div class="sb-sidenav-menu-heading">Interface</div>
                         <a class="nav-link" href="sendfeedback.html">
                             <div class="sb-nav-link-icon"><i class="fas fa-comment-dots"></i></div>
                             Send Feedback
@@ -161,7 +165,21 @@
                             <div class="sb-nav-link-icon"><i class="fas fa-book"></i></div>
                             View Assigned Subject
                         </a>
+                        
+                        <a class="nav-link" href="setfacestudent.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-user-circle"></i></div>
+                            Set Face
+                        </a>
+                        <a class="nav-link" href="viewslipexam.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-book-reader"></i></div>
+                            View Slip Exam
+                        </a>
+                        <a class="nav-link" href="viewownattendace.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-user-graduate"></i></div>
+                            View Exam Attendace
+                        </a>
                     </div>
+  
                 </div>
                 <div class="sb-sidenav-footer">
                     <div class="small">Logged in as:</div>

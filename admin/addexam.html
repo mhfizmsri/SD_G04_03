@@ -4,12 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Exam</title>
+    <link href="css/styles.css" rel="stylesheet" />
+    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+    
+    <!-- Firebase and JavaScript modules -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDocs, doc, setDoc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAFLeG3xlGCH9Ci7j8q6GBA1jDVyb3zSM4",
             authDomain: "utmsmartscan.firebaseapp.com",
@@ -29,12 +32,11 @@
             }
         });
 
-        // Fetch subjects and display as checkboxes
         async function fetchSubjects() {
             const subjectsCollection = collection(db, "subject");
             const subjectsSnapshot = await getDocs(subjectsCollection);
             const subjects = subjectsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
+            
             const subjectContainer = document.getElementById("subjectContainer");
             subjects.forEach(subject => {
                 const label = document.createElement("label");
@@ -51,81 +53,155 @@
             });
         }
 
-        // Fetch students for each selected subject
-        async function fetchStudentsForSubject(subjectId) {
-            const studentsCollection = collection(db, "users");
-            const q = query(studentsCollection, where("subjects", "array-contains", subjectId));
-            const studentsSnapshot = await getDocs(q);
-            return studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        }
+        window.createExam = async function () {
+            const date = document.getElementById("examDate").value;
+            const selectedSubjects = Array.from(document.querySelectorAll('input[name="subject"]:checked')).map(checkbox => checkbox.value);
 
-        // Create Exam Document
-        // Create Exam Document
-window.createExam = async function () {
-    const date = document.getElementById("examDate").value;
-    const selectedSubjects = Array.from(document.querySelectorAll('input[name="subject"]:checked')).map(checkbox => checkbox.value);
-
-    if (!date || selectedSubjects.length === 0) {
-        alert("Please select both a date and at least one subject.");
-        return;
-    }
-
-    try {
-        // Calculate the day of the week from the date
-        const dayOfWeek = new Date(date).toLocaleString('en-US', { weekday: 'long' });
-
-        // Create the main exam document with date, day, and StartScan
-        const examDocRef = await addDoc(collection(db, "exam"), {
-            date,
-            Day: dayOfWeek,
-            StartScan: "No"
-        });
-
-        // Loop through selected subjects to create subcollection
-        for (const subjectId of selectedSubjects) {
-            const subjectDocRef = doc(db, "exam", examDocRef.id, "subject", subjectId);
-            const subjectData = await getDoc(doc(db, "subject", subjectId));
-
-            if (subjectData.exists()) {
-                const subjectName = subjectData.data().subject_name;
-
-                // Fetch students enrolled in the subject
-                const enrolledStudents = await fetchStudentsForSubject(subjectId);
-                const studentList = enrolledStudents.map(student => ({
-                    id: student.id,
-                    name: student.Name, // Assuming `Name` is the field for student name
-                    attendance: "No" // Set attendance default to "No"
-                }));
-
-                // Create subject document in the subcollection with subject name and student list
-                await setDoc(subjectDocRef, {
-                    subject_name: subjectName,
-                    students: studentList
-                });
+            if (!date || selectedSubjects.length === 0) {
+                alert("Please select both a date and at least one subject.");
+                return;
             }
-        }
 
-        alert("Exam created successfully with subjects and enrolled students!");
-    } catch (error) {
-        console.error("Error creating exam:", error);
-        alert("Failed to create exam. Please try again.");
-    }
-};
+            try {
+                const dayOfWeek = new Date(date).toLocaleString('en-US', { weekday: 'long' });
+                const examDocRef = await addDoc(collection(db, "exam"), { date, Day: dayOfWeek, StartScan: "No" });
 
+                for (const subjectId of selectedSubjects) {
+                    const subjectDocRef = doc(db, "exam", examDocRef.id, "subject", subjectId);
+                    const subjectData = await getDoc(doc(db, "subject", subjectId));
+                    
+                    if (subjectData.exists()) {
+                        const subjectName = subjectData.data().subject_name;
+                        const enrolledStudents = await fetchStudentsForSubject(subjectId);
+                        const studentList = enrolledStudents.map(student => ({ id: student.id, name: student.Name, attendance: "No" }));
+
+                        await setDoc(subjectDocRef, { subject_name: subjectName, students: studentList });
+                    }
+                }
+
+                alert("Exam created successfully with subjects and enrolled students!");
+            } catch (error) {
+                console.error("Error creating exam:", error);
+                alert("Failed to create exam. Please try again.");
+            }
+        };
 
         window.onload = fetchSubjects;
     </script>
 </head>
-<body>
-    <h1>Create Exam</h1>
-    <label for="examDate">Exam Date:</label>
-    <input type="date" id="examDate" required>
+<body class="sb-nav-fixed">
+    <div class="background"></div> <!-- Background Image -->
 
-    <label>Select Subjects:</label>
-    <div id="subjectContainer">
-        <!-- Subject checkboxes will be added here dynamically -->
+    <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
+        <!-- Navbar Brand-->
+        <a class="navbar-brand ps-3" href="index.html">
+            <img src="utm_logo.png" alt="UTM Logo" style="height: 40px; margin-right: 10px;" />
+            <img src="utmsslogo.png" alt="UTM SmartScan Logo" style="height: 40px;" />
+        </a>
+        <!-- Sidebar Toggle-->
+        <button class="btn btn-link btn-sm order-1 order-lg-0 me-4" id="sidebarToggle" href="#!"><i class="fas fa-bars"></i></button>
+        <!-- Right-aligned Navbar-->
+        <ul class="navbar-nav ms-auto">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-user fa-fw"></i></a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                    <li><a class="dropdown-item" href="profileadmin.html">Profile</a></li>
+                    <li><a class="dropdown-item" href="#!">Settings</a></li>
+                    <li><hr class="dropdown-divider" /></li>
+                    <li><a class="dropdown-item" href="login.html" id="logout">Logout</a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+    <div id="layoutSidenav">
+        <div id="layoutSidenav_nav">
+            <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
+                <div class="sb-sidenav-menu">
+                    <div class="nav">
+                        <div class="sb-sidenav-menu-heading">Core</div>
+                        <a class="nav-link" href="index.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
+                            Dashboard
+                        </a>
+                        <div class="sb-sidenav-menu-heading">Interface</div>
+                        <a class="nav-link" href="addstudent.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-user-plus"></i></div>
+                            Add Student
+                        </a>
+                        <a class="nav-link" href="viewstudent.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>
+                            View Students
+                        </a>
+                        <a class="nav-link" href="addsubject.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-book"></i></div>
+                            Add Subject
+                        </a>
+                        <a class="nav-link" href="viewsubject.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-book-open"></i></div>
+                            View Subjects
+                        </a>
+                        <a class="nav-link" href="assignsubject.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-tasks"></i></div> <!-- Updated icon -->
+                            Assign Subjects
+                        </a>
+                        <a class="nav-link" href="viewattendance.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-clipboard-list"></i></div> <!-- Changed icon -->
+                            View Attendance
+                        </a>
+                        <a class="nav-link" href="addexam.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-calendar-plus"></i></div> <!-- Changed icon -->
+                            Add Exam
+                        </a>
+                        <a class="nav-link" href="viewexam.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-calendar-alt"></i></div> <!-- Changed icon -->
+                            View Exam
+                        </a>
+                        <div class="sb-sidenav-menu-heading">Addons</div>
+                        <a class="nav-link" href="checkfeedback.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-comment-dots"></i></div>
+                            Feedback
+                        </a>
+                        <a class="nav-link" href="tables.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
+                            Tables
+                        </a>
+                    </div>
+                </div>
+                <div class="sb-sidenav-footer">
+                    <div class="small">Logged in as:</div>
+                    <span id="adminName">User</span>
+                </div>
+            </nav>
+        </div>
+
+        <div class="container mt-5">
+            <div class="row justify-content-center">
+                <div class="col-lg-6">
+                    <div class="card shadow-lg border-0 rounded-lg">
+                        <div class="card-header text-center">
+                            <h3 class="font-weight-light">Create Exam</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="examForm">
+                                <div class="form-floating mb-3">
+                                    <input type="date" class="form-control" id="examDate" placeholder="Exam Date" required />
+                                    <label for="examDate">Exam Date</label>
+                                </div>
+                                <label>Select Subjects:</label>
+                                <div id="subjectContainer" class="mb-3">
+                                    <!-- Subjects checkboxes dynamically added here -->
+                                </div>
+                                <button class="btn btn-primary" type="button" onclick="createExam()">Create Exam</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <button onclick="createExam()">Create Exam</button>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/scripts.js"></script>
 </body>
 </html>
+
