@@ -80,49 +80,80 @@
         }
 
         // Populate exam table
-        function populateExamTable(examList) {
-            const tableBody = document.getElementById('examTableBody');
-            tableBody.innerHTML = "";  // Clear previous entries if any
-            examList.forEach((exam, index) => {
-                const row = document.createElement('tr');
-                const cell1 = document.createElement('td');
-                const cell2 = document.createElement('td');
-                const cell3 = document.createElement('td');
+        // Populate exam table
+function populateExamTable(examList) {
+    const tableBody = document.getElementById('examTableBody');
+    tableBody.innerHTML = ""; // Clear previous entries if any
+    examList.forEach((exam, index) => {
+        const row = document.createElement('tr');
+        const cell1 = document.createElement('td');
+        const cell2 = document.createElement('td');
+        const cell3 = document.createElement('td');
+        const cell4 = document.createElement('td'); // New cell for the toggle button
 
-                cell1.textContent = index + 1;
-                cell2.textContent = exam.date;
+        cell1.textContent = index + 1;
+        cell2.textContent = exam.date;
 
-                // Check if subjects exist
-                if (exam.subjects.length > 0) {
-                    // Clear previous content in cell3
-                    cell3.innerHTML = '';
+        // Check if subjects exist
+        if (exam.subjects.length > 0) {
+            cell3.innerHTML = ''; // Clear previous content in cell3
+            exam.subjects.forEach((subject, subjectIndex) => {
+                const subjectSpan = document.createElement('span');
+                subjectSpan.textContent = subject.name;
+                subjectSpan.classList.add('clickable');
+                subjectSpan.onclick = () => {
+                    console.log("Subject clicked:", subject.name);
+                    openStudentModal(exam.id, subject.id); // Pass both exam ID and subject ID
+                };
+                cell3.appendChild(subjectSpan);
 
-                    // Create a click event for each subject
-                    exam.subjects.forEach((subject, subjectIndex) => {
-                        const subjectSpan = document.createElement('span');
-                        subjectSpan.textContent = subject.name;
-                        subjectSpan.classList.add('clickable');
-                        subjectSpan.onclick = () => {
-                            console.log("Subject clicked:", subject.name);
-                            openStudentModal(exam.id, subject.id); // Pass both exam ID and subject ID
-                        };
-                        cell3.appendChild(subjectSpan);
-
-                        // Add a separator for better readability (except for the last subject)
-                        if (subjectIndex < exam.subjects.length - 1) {
-                            cell3.appendChild(document.createTextNode(', ')); // Add comma between subjects
-                        }
-                    });
-                } else {
-                    cell3.textContent = "No Subject Assigned";
+                // Add a separator for better readability (except for the last subject)
+                if (subjectIndex < exam.subjects.length - 1) {
+                    cell3.appendChild(document.createTextNode(', ')); // Add comma between subjects
                 }
-
-                row.appendChild(cell1);
-                row.appendChild(cell2);
-                row.appendChild(cell3);
-                tableBody.appendChild(row);
             });
+        } else {
+            cell3.textContent = "No Subject Assigned";
         }
+
+        // Create the toggle button for StartScan
+        const toggleButton = document.createElement('button');
+        toggleButton.textContent = exam.StartScan === "Yes" ? "Turn Off" : "Turn On";
+        toggleButton.classList.add('btn', exam.StartScan === "Yes" ? 'btn-danger' : 'btn-success');
+        toggleButton.onclick = async () => {
+            try {
+                // Toggle the StartScan value
+                const newStartScanValue = exam.StartScan === "Yes" ? "No" : "Yes";
+                
+                // Update Firestore
+                const examDocRef = doc(db, "exam", exam.id);
+                await updateDoc(examDocRef, { StartScan: newStartScanValue });
+                
+                // Update button text and style
+                toggleButton.textContent = newStartScanValue === "Yes" ? "Turn Off" : "Turn On";
+                toggleButton.classList.toggle('btn-danger', newStartScanValue === "Yes");
+                toggleButton.classList.toggle('btn-success', newStartScanValue === "No");
+
+                // Update the exam object's StartScan value
+                exam.StartScan = newStartScanValue;
+
+                alert("StartScan updated successfully!");
+            } catch (error) {
+                console.error("Error updating StartScan: ", error);
+                alert("Failed to update StartScan.");
+            }
+        };
+        cell4.appendChild(toggleButton);
+
+        // Append cells to the row
+        row.appendChild(cell1);
+        row.appendChild(cell2);
+        row.appendChild(cell3);
+        row.appendChild(cell4); // Append the toggle button cell
+        tableBody.appendChild(row);
+    });
+}
+
 
         // Open modal with student list for a subject
         async function openStudentModal(examId, subjectId) {
@@ -291,6 +322,7 @@
                                         <th>No</th>
                                         <th>Date</th>
                                         <th>Subjects</th>
+                                        <th>Start Scan Face</th>
                                     </tr>
                                 </thead>
                                 <tbody id="examTableBody">
