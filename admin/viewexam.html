@@ -56,7 +56,7 @@
                 const examSnapshot = await getDocs(examCollection);
                 const examList = await Promise.all(
                     examSnapshot.docs.map(async (examDoc) => {
-                        const examData = examDoc.data();s
+                        const examData = examDoc.data();
                         const subjectCollection = collection(db, "exam", examDoc.id, "subject"); // Access the subject subcollection
                         const subjectSnapshot = await getDocs(subjectCollection);
 
