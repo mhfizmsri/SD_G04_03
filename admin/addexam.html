@@ -60,49 +60,58 @@
         }
 
         // Create Exam Document
-        window.createExam = async function () {
-            const date = document.getElementById("examDate").value;
-            const selectedSubjects = Array.from(document.querySelectorAll('input[name="subject"]:checked')).map(checkbox => checkbox.value);
+        // Create Exam Document
+window.createExam = async function () {
+    const date = document.getElementById("examDate").value;
+    const selectedSubjects = Array.from(document.querySelectorAll('input[name="subject"]:checked')).map(checkbox => checkbox.value);
 
-            if (!date || selectedSubjects.length === 0) {
-                alert("Please select both a date and at least one subject.");
-                return;
+    if (!date || selectedSubjects.length === 0) {
+        alert("Please select both a date and at least one subject.");
+        return;
+    }
+
+    try {
+        // Calculate the day of the week from the date
+        const dayOfWeek = new Date(date).toLocaleString('en-US', { weekday: 'long' });
+
+        // Create the main exam document with date, day, and StartScan
+        const examDocRef = await addDoc(collection(db, "exam"), {
+            date,
+            Day: dayOfWeek,
+            StartScan: "No"
+        });
+
+        // Loop through selected subjects to create subcollection
+        for (const subjectId of selectedSubjects) {
+            const subjectDocRef = doc(db, "exam", examDocRef.id, "subject", subjectId);
+            const subjectData = await getDoc(doc(db, "subject", subjectId));
+
+            if (subjectData.exists()) {
+                const subjectName = subjectData.data().subject_name;
+
+                // Fetch students enrolled in the subject
+                const enrolledStudents = await fetchStudentsForSubject(subjectId);
+                const studentList = enrolledStudents.map(student => ({
+                    id: student.id,
+                    name: student.Name, // Assuming `Name` is the field for student name
+                    attendance: "No" // Set attendance default to "No"
+                }));
+
+                // Create subject document in the subcollection with subject name and student list
+                await setDoc(subjectDocRef, {
+                    subject_name: subjectName,
+                    students: studentList
+                });
             }
+        }
 
-            try {
-                // Create the main exam document with date
-                const examDocRef = await addDoc(collection(db, "exam"), { date });
+        alert("Exam created successfully with subjects and enrolled students!");
+    } catch (error) {
+        console.error("Error creating exam:", error);
+        alert("Failed to create exam. Please try again.");
+    }
+};
 
-                // Loop through selected subjects to create subcollection
-                for (const subjectId of selectedSubjects) {
-                    const subjectDocRef = doc(db, "exam", examDocRef.id, "subject", subjectId);
-                    const subjectData = await getDoc(doc(db, "subject", subjectId));
-
-                    if (subjectData.exists()) {
-                        const subjectName = subjectData.data().subject_name;
-
-                        // Fetch students enrolled in the subject
-                        const enrolledStudents = await fetchStudentsForSubject(subjectId);
-                        const studentList = enrolledStudents.map(student => ({
-                            id: student.id,
-                            name: student.Name, // Assuming `Name` is the field for student name
-                            attendance: "No" // Set attendance default to "No"
-                        }));
-
-                        // Create subject document in the subcollection with subject name and student list
-                        await setDoc(subjectDocRef, {
-                            subject_name: subjectName,
-                            students: studentList
-                        });
-                    }
-                }
-
-                alert("Exam created successfully with subjects and enrolled students!");
-            } catch (error) {
-                console.error("Error creating exam:", error);
-                alert("Failed to create exam. Please try again.");
-            }
-        };
 
         window.onload = fetchSubjects;
     </script>

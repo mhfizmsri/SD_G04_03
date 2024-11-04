@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Exam Slip</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
+    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+    <link href="css/styles.css" rel="stylesheet" />
+
+    <style>
+        /* Styles remain unchanged */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #FF7043;
+            padding: 20px 0;
+            text-align: center;
+            color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 15px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            background-color: white;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-body {
+            padding: 30px;
+        }
+
+        h2 {
+            font-weight: 700;
+            color: #5f0808;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            color: #5f0808;
+            margin-bottom: 5px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            transition: border-color 0.3s;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: 500;
+            color: white;
+            background-color: #5f0808;
+            border: none;
+            border-radius: 5px;
+            text-align: center;
+            text-decoration: none;
+            transition: background-color 0.3s, transform 0.3s;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #FF8A65;
+            transform: translateY(-2px);
+        }
+    </style>
+
+    <!-- Firebase SDK (import as module) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAFLeG3xlGCH9Ci7j8q6GBA1jDVyb3zSM4",
+            authDomain: "utmsmartscan.firebaseapp.com",
+            projectId: "utmsmartscan",
+            storageBucket: "utmsmartscan.appspot.com",
+            messagingSenderId: "150286309478",
+            appId: "1:150286309478:web:4ec07841589ecfc34975a7"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const storage = getStorage(app);
+
+        // Listen for auth state changes
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                // Redirect to login if not authenticated
+                window.location.href = "index.html";
+            } else {
+                console.log("User logged in:", user);
+                populateExamSlipOptions(user);
+            }
+        });
+
+        // Function to populate the combo box with options from Firestore
+        async function populateExamSlipOptions(user) {
+            try {
+                const userId = user.uid;
+                const examSlipRef = doc(db, "users", userId, "Student_detail", "ExamSlip");
+                const examSlipDoc = await getDoc(examSlipRef);
+
+                if (examSlipDoc.exists()) {
+                    console.log("Exam slip document data:", examSlipDoc.data());
+                    const data = examSlipDoc.data();
+                    const examSlipSelector = document.getElementById("examSlipSelector");
+                    for (const key in data) {
+                        if (data.hasOwnProperty(key)) {
+                            const option = document.createElement("option");
+                            option.value = key;
+                            option.textContent = key;
+                            examSlipSelector.appendChild(option);
+                        }
+                    }
+                } else {
+                    alert("No exam slips found in the database.");
+                    console.error("No exam slips found in Firestore.");
+                }
+            } catch (error) {
+                console.error("Error fetching exam slips:", error);
+                alert("Error fetching exam slips!");
+            }
+        }
+
+        // Function to fetch and open the file from Firebase Storage
+        document.getElementById("viewSlipButton").addEventListener("click", async () => {
+            const selectedSlip = document.getElementById("examSlipSelector").value;
+            try {
+                const user = auth.currentUser;
+                if (!user) {
+                    alert("Please log in to view the exam slip.");
+                    return;
+                }
+        
+                const userId = user.uid; // Assuming the user's ID is the unique identifier
+                const examSlipRef = doc(db, "users", userId, "Student_detail", "ExamSlip");
+                const examSlipDoc = await getDoc(examSlipRef);
+        
+                if (examSlipDoc.exists()) {
+                    const data = examSlipDoc.data();
+                    const fileName = data[selectedSlip];
+        
+                    // Debugging: Log the file name and path to check for issues
+                    console.log(`Selected Slip: ${selectedSlip}`);
+                    console.log(`File Name from Firestore: ${fileName}`);
+        
+                    if (fileName && typeof fileName === "string") {
+                        // Include the user's unique ID in the file path
+                        const fileRef = ref(storage, `exam_slips/${userId}/${fileName}`);
+                        const fileURL = await getDownloadURL(fileRef);
+                        window.open(fileURL, "_blank"); // Open the file in a new tab
+                    } else {
+                        alert("Invalid file name retrieved from Firestore.");
+                        console.error("Invalid file name:", fileName);
+                    }
+                } else {
+                    alert("Exam Slip not found or not available!");
+                    console.error("Exam Slip not found in Firestore.");
+                }
+            } catch (error) {
+                console.error("Error fetching exam slip:", error);
+                alert("Error fetching exam slip!");
+            }
+        });
+        
+        
+    </script>
+</head>
+<body>
+    <header>
+        <h1>UTM Student Exam Slip Viewer</h1>
+    </header>
+    <div class="container">
+        <div class="card">
+            <div class="card-body">
+                <h2>View Exam Slip</h2>
+                <div class="form-group">
+                    <label for="examSlipSelector">Select Exam Slip</label>
+                    <select id="examSlipSelector" class="form-control"></select>
+                </div>
+                <button id="viewSlipButton" class="btn">View Exam Slip</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
