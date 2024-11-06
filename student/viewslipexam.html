@@ -5,99 +5,64 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View Exam Slip</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
-    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
-    <link href="css/styles.css" rel="stylesheet" />
+    <!-- bootstrap css -->
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <!-- style css -->
+    <link rel="stylesheet" href="css/style.css">
+    <!-- responsive-->
+    <link rel="stylesheet" href="css/responsive.css">
+    <!-- awesome fontfamily -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script><![endif]-->
 
     <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f4f4f9;
-            color: #333;
-            margin: 0;
-            padding: 0;
+        /* Background image for the main content section */
+        #top_section {
+            background-image: url('images/banner2.jpg');
+            background-size: cover;
+            background-position: center;
+            min-height: 680px; /* Ensure the section takes full height */
+            display: flex;
+            flex-direction: column; /* Ensure content is aligned properly */
+            justify-content: center; /* Center content vertically */
+            padding: 50px 0;
+            margin-bottom: 0; /* Remove any bottom margin */
         }
-
-        header h1 {
-            color: #FF7043;
-            text-align: center;
-            font-size: 2rem;
-            font-weight: 700;
+    
+        /* Ensure the footer has a white background */
+        footer {
+            background-color: white !important;
+        }
+    
+        .exam-slip-container {
+            background-color: rgba(255, 255, 255, 0.7); /* Slightly transparent background */
             padding: 20px;
+            border-radius: 8px;
+            width: 80%; /* Adjust the width */
+            margin: 0 auto; /* Center it horizontally */
         }
-
-        .container {
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 0 15px;
+    
+        .titlepage {
+            text-align: center; /* Center the title */
+            color: white; /* White color for the title */
+            margin-bottom: 30px;
         }
-
-        .card {
-            border: none;
-            border-radius: 10px;
-            background-color: white;
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
-        }
-
-        .card-body {
-            padding: 30px;
-        }
-
-        h2 {
-            font-weight: 700;
-            color: #5f0808;
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            font-weight: 500;
-            color: #5f0808;
-            margin-bottom: 5px;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            transition: border-color 0.3s;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 10px 20px;
-            font-size: 16px;
-            font-weight: 500;
-            color: white;
-            background-color: #5f0808;
-            border: none;
-            border-radius: 5px;
-            text-align: center;
-            text-decoration: none;
-            transition: background-color 0.3s, transform 0.3s;
-            cursor: pointer;
-        }
-
-        .btn:hover {
-            background-color: #FF8A65;
-            transform: translateY(-2px);
+    
+        /* Center the contents in the row */
+        .d_flex {
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
     </style>
+    
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
         const firebaseConfig = {
@@ -165,95 +130,96 @@
                 alert("Exam Slip not available.");
             }
         });
+
+        const logoutButton = document.getElementById('logout');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', function() {
+                    signOut(auth).then(() => {
+                        window.location.href = 'index.html';
+                    }).catch((error) => {
+                        console.error('Sign Out Error', error);
+                    });
+                });
+            }
     </script>
 </head>
-<body class="sb-nav-fixed">
-    <div class="blur"></div>
-    <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
-        <a class="navbar-brand ps-3" href="home.html">
-            <img src="utm_logo.png" alt="UTM Logo" style="height: 40px; margin-right: 10px;" />
-            <img src="utmsslogo.png" alt="UTM SmartScan Logo" style="height: 40px;" />
-        </a>
-        <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" href="#!"><i class="fas fa-bars"></i></button>
-        <form class="d-none d-md-inline-block form-inline ms-auto me-0 me-md-3 my-2 my-md-0">
-        </form>
-        <ul class="navbar-nav ms-auto ms-md-0 me-3 me-lg-4">
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-user fa-fw"></i></a>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                    <li><a class="dropdown-item" href="profilestudent.html">Profile</a></li>
-                    <li><a class="dropdown-item" href="#!">Activity Log</a></li>
-                    <li><hr class="dropdown-divider" /></li>
-                    <li><a class="dropdown-item" href="index.html" id="logout">Logout</a></li>
-                </ul>
-            </li>
-        </ul>
-    </nav>
-    <div id="layoutSidenav">
-        <div id="layoutSidenav_nav">
-            <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
-                <div class="sb-sidenav-menu">
-                    <div class="nav">
-                        <div class="sb-sidenav-menu-heading">Core</div>
-                        <a class="nav-link" href="home.html">
-                            <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
-                            Dashboard
-                        </a>
-                        <div class="sb-sidenav-menu-heading">Interface</div>
-                        <a class="nav-link" href="sendfeedback.html">
-                            <div class="sb-nav-link-icon"><i class="fas fa-comment-dots"></i></div>
-                            Send Feedback
-                        </a>
-
-                        <a class="nav-link" href="viewassignedsubject.html">
-                            <div class="sb-nav-link-icon"><i class="fas fa-book"></i></div>
-                            View Assigned Subject
-                        </a>
-                        
-                        <a class="nav-link" href="setfacestudent.html">
-                            <div class="sb-nav-link-icon"><i class="fas fa-user-circle"></i></div>
-                            Set Face
-                        </a>
-                        <a class="nav-link" href="viewslipexam.html">
-                            <div class="sb-nav-link-icon"><i class="fas fa-book-reader"></i></div>
-                            View Slip Exam
-                        </a>
-                        <a class="nav-link" href="viewownattendace.html">
-                            <div class="sb-nav-link-icon"><i class="fas fa-user-graduate"></i></div>
-                            View Exam Attendace
-                        </a>
+<body class="main-layout">
+    <div id="mySidepanel" class="sidepanel">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">×</a>
+        <a href="home.html">Home</a>
+        <a href="sendfeedback.html">Send Feeback</a>
+        <a href="viewassignedsubject.html">View Assigned Subject</a>
+        <a href="setfacestudent.html">Set Face</a>
+        <a class="active" href="viewslipexam.html">View Exam Slip</a>
+        <a href="viewownattendace.html">View Exam Attendance</a>
+    </div>
+    <!-- header -->
+    <header>
+        <!-- header inner -->
+        <div class="head-top">
+           <div class="container-fluid">
+              <div class="row d_flex">
+                 <div class="col-sm-3">
+                    <div class="logo">
+                       <a href="home.html"><img src="utmsslogo-removebg-preview.png" style="width: 215px; height: 100px;"/></a>
                     </div>
-  
-                </div>
-                <div class="sb-sidenav-footer">
-                    <div class="small">Logged in as:</div>
-                    <span id="studentName"></span>
-                </div>
-            </nav>
+                 </div>
+                 <div class="col-sm-9">
+                    <ul class="email text_align_right">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fa fa-user" style="font-size: 45px;" aria-hidden="true"></i>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" href="profilestudent.html" style="color: black;">Profile</a></li>
+                                <li><a class="dropdown-item" href="index.html" id="logout" style="color: black;">Logout</a></li>
+                            </ul>
+                        </li>
+                        <li><button class="openbtn" onclick="toggleNav()"><img src="images/menu_btn.png"></button></li>
+                    </ul>                    
+                 </div>
+              </div>
+           </div>
         </div>
-
-        <div id="layoutSidenav_content">
-            <main>
-                <div class="container">
-                    <header>
-                        <h1>UTM Student Exam Slip Viewer</h1>
-                    </header>
-                    <div class="card">
-                        <div class="card-body">
-                            <h2>View Exam Slip</h2>
-                            <div class="form-group">
-                                <label for="examSlipSelector">Select Exam Slip</label>
-                                <select id="examSlipSelector" class="form-control"></select>
-                            </div>
-                            <button id="viewSlipButton" class="btn">View Exam Slip</button>
-                        </div>
-                    </div>
+     </header>
+     <!-- end header -->
+      <!-- start slider section -->
+    <div id="top_section" class="banner_main">
+        <div class="container">
+           <div class="row d_flex">
+              <div class="col-md-6">
+                <div class="titlepage text_align_left">
+                    <h2 style="color: white;">UTM Student Exam Slip Viewer</h2>
                 </div>
-            </main>
+                <div class="exam-slip-container">
+                    <h4>Select Your Exam Slip</h4>
+                    <div class="form-group">
+                        <label for="examSlipSelector">Select Exam Slip</label>
+                        <select id="examSlipSelector" class="form-control"></select>
+                    </div>
+                    <button id="viewSlipButton" class="btn btn-primary">View Exam Slip</button>
+                </div>
+              </div>
+           </div>
         </div>
     </div>
+    <!-- end slider section -->
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    <footer class="py-4 bg-light mt-auto">
+        <div class="container-fluid px-4">
+            <div class="d-flex align-items-center justify-content-between small">
+                <div class="text-muted">Copyright &copy; UTM Smart Scan</div>
+                <div></div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Javascript files-->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <script src="js/scripts.js"></script>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="js/jquery-3.0.0.min.js"></script>
+    <script src="js/custom.js"></script>
 </body>
 </html>
-
