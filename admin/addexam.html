@@ -53,6 +53,14 @@
             });
         }
 
+        // Fetch students for each selected subject
+        async function fetchStudentsForSubject(subjectId) {
+            const studentsCollection = collection(db, "users");
+            const q = query(studentsCollection, where("subjects", "array-contains", subjectId));
+            const studentsSnapshot = await getDocs(q);
+            return studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        }
+
         window.createExam = async function () {
             const date = document.getElementById("examDate").value;
             const selectedSubjects = Array.from(document.querySelectorAll('input[name="subject"]:checked')).map(checkbox => checkbox.value);
