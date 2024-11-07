@@ -32,6 +32,15 @@
             }
         });
 
+        // Fetch students
+        window.fetchStudentsForSubject = async function(subjectId){
+        //async function fetchStudentsForSubject(subjectId) {
+            const studentsCollection = collection(db, "users");
+            const q = query(studentsCollection, where("subjects", "array-contains", subjectId));
+            const studentsSnapshot = await getDocs(q);
+            return studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        }
+
         async function fetchSubjects() {
             const subjectsCollection = collection(db, "subject");
             const subjectsSnapshot = await getDocs(subjectsCollection);
@@ -51,15 +60,6 @@
                 subjectContainer.appendChild(label);
                 subjectContainer.appendChild(document.createElement("br"));
             });
-        }
-
-        // Fetch students
-        window.fetchStudentsForSubject = async function(subjectId){
-        //async function fetchStudentsForSubject(subjectId) {
-            const studentsCollection = collection(db, "users");
-            const q = query(studentsCollection, where("subjects", "array-contains", subjectId));
-            const studentsSnapshot = await getDocs(q);
-            return studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         }
 
         window.createExam = async function () {
