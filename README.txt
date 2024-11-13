@@ -22,7 +22,7 @@ Device(Raspberry Pi):
 5. Set up Firebase with Firestore and Authentication. Download the service account key JSON file and place it in the specified location.
 6. Connect the buzzer to GPIO 20 and GND. Ensure Device.py has the correct GPIO configuration.
 7. Connect and enable the Raspberry Pi Camera using ("sudo raspi-config"), then reboot. Test with ("raspistill -o test.jpg").
-8. Run Device.py with python3 Device.py and check that all components are functioning.
+8. Run Device.py with python3 Device.py and check that all components are functioning.("python3 Device.py")
 9. Access the website admin page, go to "View Exam," and select an exam to start scanning attendance.
 
 
