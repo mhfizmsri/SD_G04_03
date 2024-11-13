@@ -15,8 +15,8 @@ Download the face-api.js file and place it in your project directory under the j
 Device(Raspberry Pi): 
 1. Clone the "Device.py" repository to your Raspberry Pi.
 2. Install dependencies:
-pip install opencv-python firebase-admin face_recognition numpy
-sudo apt-get install python3-lgpio
+("pip install opencv-python firebase-admin face_recognition numpy")
+("sudo apt-get install python3-lgpio")
 3. Download face-api.js from Face API GitHub (https://github.com/justadudewhohacks/face-api.js) if needed.
 4. Download haarcascade_frontalface_default.xml from OpenCV GitHub (https://github.com/opencv/opencv/tree/master/data/haarcascades) and place it in the specified path.
 5. Set up Firebase with Firestore and Authentication. Download the service account key JSON file and place it in the specified location.
