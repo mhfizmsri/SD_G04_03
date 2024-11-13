@@ -38,6 +38,6 @@ Student User Id:
 
 Admin User Id: 
 1.muhafizmasri2004@gmail.com Password:Admin123#
-2.chee.sen987@gmail.com Password: Admin123!
+2.weihao0607@gmail.com Password: Admin123!
 
 
